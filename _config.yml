@@ -1,5 +1,5 @@
 name: Capture The Flag
-baseurl: http://capstone-ua-redepsilon.github.io/projectred/tree/gh-pages
+baseurl: http://capstone-ua-redepsilon.github.io/projectred/
 description: a synchronous, cooperative multiplayer, puzzle platformer game for Android
 
 permalink: /:year/:month/:day/:title/
