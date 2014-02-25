@@ -1,6 +1,6 @@
-name: Merlot Theme
-baseurl: http://ZedThree.github.io/merlot-theme-jekyll
-description: a fancy schmancy theme for github pages
+name: Capture The Flag
+baseurl: http://capstone-ua-redepsilon.github.io/projectred/
+description: a synchronous, cooperative multiplayer, puzzle platformer game for Android
 
 permalink: /:year/:month/:day/:title/
 paginate: 10
