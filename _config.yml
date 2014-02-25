@@ -1,0 +1,9 @@
+name: Merlot Theme
+baseurl: http://ZedThree.github.io/merlot-theme-jekyll
+description: a fancy schmancy theme for github pages
+
+permalink: /:year/:month/:day/:title/
+paginate: 10
+pygments: true
+
+exclude: ['README.md']
