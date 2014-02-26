@@ -2,7 +2,7 @@
 layout: post
 title:  "Capture the Flag: Introduction"
 date:   2014-02-25 17:35:02
-categories: overview
+permalink: /overview/
 ---
 #What Is It?
 Capture the Flag (CTF) is a *synchronous*, *cooperative*, *puzzle* game developed for Android.
