@@ -13,7 +13,14 @@ public class LandingActivity extends Activity {
 	final OnClickListener clickStart = new OnClickListener() {
 		@Override
 		public void onClick(View v) {
-			setContentView(R.layout.activity_game);
+//			setContentView(R.layout.activity_game);
+			NetworkHandler handler = new NetworkHandler();
+			try {
+				handler.runtest();
+				handler.testZMQ();
+			} catch (Exception e) {
+				System.out.println(e.toString());
+			}
 		}
 	};
 	
