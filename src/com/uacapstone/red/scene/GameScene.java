@@ -269,6 +269,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     private Player player;
     private Vector2 lastTouchCoords;
     private static int DRAG_DISTANCE = 50;
+    private static double MOVE_TOUCH_PERCENTAGE = .5;
     private boolean hasJumped = false;
     private Text gameOverText;
     private boolean gameOverDisplayed = false;
@@ -292,11 +293,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 			float y = pSceneTouchEvent.getY() - camera.getYMin();
 			int xdir = 0;
 			lastTouchCoords = new Vector2(x, y);
-			if (x < DRAG_DISTANCE)
+			if (x < camera.getWidth()*MOVE_TOUCH_PERCENTAGE)
 			{
 				xdir = -1;
 			}
-			else if (x > camera.getWidth() - DRAG_DISTANCE)
+			else if (x > camera.getWidth() - camera.getWidth()*MOVE_TOUCH_PERCENTAGE)
 			{
 				xdir = 1;
 			}
