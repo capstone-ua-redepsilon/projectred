@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<level width="1000" height="780">    
+    <entity x="100" y="100" type="platform1"/>
+    <entity x="200" y="200" type="platform1"/>
+    <entity x="400" y="200" type="platform3"/>
+    <entity x="550" y="300" type="platform2"/>
+    <entity x="720" y="240" type="platform3"/>
+    <entity x="400" y="270" type="coin"/>
+    <entity x="500" y="400" type="coin"/>
+    <entity x="600" y="400" type="coin"/>
+    <entity x="60" y="140" type="player" />
+</level>
