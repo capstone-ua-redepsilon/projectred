@@ -65,10 +65,13 @@ public abstract class Player extends AnimatedSprite
     private void animateRun(float direction)
     {
         final long[] PLAYER_ANIMATE = new long[] { 100, 100, 100 };
-        if (direction != 0 && isOnGround())
+        if (direction != 0)
         {
         	setScaleX(direction);
-            animate(PLAYER_ANIMATE, 0, 2, true);
+        	if (isOnGround())
+        	{
+        		animate(PLAYER_ANIMATE, 0, 2, true);
+        	}
         }
         else
         {

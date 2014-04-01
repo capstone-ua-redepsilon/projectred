@@ -1,8 +1,10 @@
 package com.uacapstone.red.scene;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import org.andengine.engine.camera.hud.HUD;
+import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.entity.IEntity;
 import org.andengine.entity.modifier.LoopEntityModifier;
 import org.andengine.entity.modifier.ScaleModifier;
@@ -102,6 +104,36 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         registerUpdateHandler(physicsWorld);
         DebugRenderer debug = new DebugRenderer(physicsWorld, vbom);
         this.attachChild(debug);
+        FIXTURE_DEF = PhysicsFactory.createFixtureDef(0, 0.01f, 0.5f);
+        
+        registerUpdateHandler(new IUpdateHandler() {
+	    	@Override
+	    	public void onUpdate(float pSecondsElapsed) {
+	    	    for (Sprite s : spritesToAdd)
+	    	    {
+	    	    	final Sprite levelObject = s;
+	                hiddenPlatformBody = PhysicsFactory.createBoxBody(physicsWorld, levelObject, BodyType.StaticBody, FIXTURE_DEF);
+	                hiddenPlatformBody.setUserData("platform3");
+	                s.setCullingEnabled(true);
+	                attachChild(s);
+	    	    }
+	    	    for (int i=0; i<bodiesToRemove.size(); i++)
+	    	    {
+	                physicsWorld.destroyBody(bodiesToRemove.get(i));
+	                hiddenPlatformBody = null;
+	                detachChild(hiddenPlatformSprite);
+	    	    }
+	    	    spritesToAdd.clear();
+	    	    bodiesToRemove.clear();
+	    	}
+
+			@Override
+			public void reset() {
+				// TODO Auto-generated method stub
+				
+			}
+	    	
+        });
     }
     
     private void addToScore(int i)
@@ -113,8 +145,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     private void loadLevel(int levelID)
     {
         final SimpleLevelLoader levelLoader = new SimpleLevelLoader(vbom);
-        
-        final FixtureDef FIXTURE_DEF = PhysicsFactory.createFixtureDef(0, 0.01f, 0.5f);
         
         levelLoader.registerEntityLoader(new EntityLoader<SimpleLevelEntityLoaderData>(LevelConstants.TAG_LEVEL)
         {
@@ -155,6 +185,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 else if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_SWITCH))
                 {
                     levelObject = new Sprite(x, y, resourcesManager.switch_region, vbom);
+                    hiddenPlatformSprite = new Sprite(x+100, y+100, resourcesManager.platform3_region, vbom);
                     final Body body = PhysicsFactory.createBoxBody(physicsWorld, levelObject, BodyType.StaticBody, FIXTURE_DEF);
                     body.setUserData("switch");
                     physicsWorld.registerPhysicsConnector(new PhysicsConnector(levelObject, body, true, false));
@@ -216,18 +247,25 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 final Fixture x1 = contact.getFixtureA();
                 final Fixture x2 = contact.getFixtureB();
                 Fixture ft = null;
+                Fixture o = null;
 
                 if (x1.getUserData() != null && x1.getUserData().equals("feet"))
                 {
                 	ft = x1;
+                	o = x2;
                 }
                 else if (x2.getUserData() != null && x2.getUserData().equals("feet"))
                 {
                 	ft = x2;
+                	o = x1;
                 }
             	if (ft != null)
             	{
                     player.increaseFootContacts();
+                    if (o.getBody().getUserData() != null && o.getBody().getUserData().equals("switch") && hiddenPlatformBody == null)
+                    {
+                    	spritesToAdd.add(hiddenPlatformSprite);
+                    }
                 }
             }
 
@@ -236,18 +274,25 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 final Fixture x1 = contact.getFixtureA();
                 final Fixture x2 = contact.getFixtureB();
                 Fixture ft = null;
+                Fixture o = null;
 
                 if (x1.getUserData() != null && x1.getUserData().equals("feet"))
                 {
                 	ft = x1;
+                	o = x2;
                 }
                 else if (x2.getUserData() != null && x2.getUserData().equals("feet"))
                 {
                 	ft = x2;
+                	o = x1;
                 }
             	if (ft != null)
             	{
                     player.decreaseFootContacts();
+                    if (o.getBody().getUserData() != null && o.getBody().getUserData().equals("switch"))
+                    {
+                    	bodiesToRemove.add(hiddenPlatformBody);
+                    }
                 }
             }
 
@@ -258,7 +303,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 
             public void postSolve(Contact contact, ContactImpulse impulse)
             {
-
+            	
             }
         };
         return contactListener;
@@ -288,6 +333,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     private boolean hasJumped = false;
     private Text gameOverText;
     private boolean gameOverDisplayed = false;
+	private Body hiddenPlatformBody = null;
+	private Sprite hiddenPlatformSprite;
+	private ArrayList<Sprite> spritesToAdd = new ArrayList<Sprite>();
+	private ArrayList<Body> bodiesToRemove = new ArrayList<Body>();
     
     private static final String TAG_ENTITY = "entity";
     private static final String TAG_ENTITY_ATTRIBUTE_X = "x";
@@ -299,6 +348,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_SWITCH = "switch";
     private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_FLAG = "flag";
     private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLAYER = "player";
+    
+    private static FixtureDef FIXTURE_DEF;
     
 	@Override
 	public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent) {

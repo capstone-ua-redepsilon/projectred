@@ -4,8 +4,8 @@
     <entity x="200" y="15" type="platform1"/>
     <entity x="300" y="45" type="switch"/>
     <entity x="300" y="15" type="platform1"/>
-    <entity x="300" y="300" type="platform1"/>
-    <entity x="300" y="330" type="flag"/>
+    <entity x="300" y="245" type="platform1"/>
+    <entity x="300" y="285" type="flag"/>
     <entity x="400" y="15" type="platform1"/>
     <entity x="500" y="15" type="platform1"/>
     <entity x="600" y="15" type="platform1"/>

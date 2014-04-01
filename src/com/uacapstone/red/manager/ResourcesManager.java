@@ -58,6 +58,7 @@ public class ResourcesManager
     // Game Texture Regions
     public ITextureRegion platform1_region;
     public ITextureRegion platform2_region;
+    public ITextureRegion platform3_region;
     public ITextureRegion switch_region;
     public ITextureRegion flag_region;
     
@@ -131,6 +132,7 @@ public class ResourcesManager
         
         platform1_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "platform1.png");
         platform2_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "platform2.png");
+        platform3_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "platform3.png");
         switch_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "switch.png");
         flag_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "flag.png");
         player_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "player.png", 3, 1);
@@ -158,7 +160,15 @@ public class ResourcesManager
     
     public void unloadGameTextures()
     {
-        // TODO (Since we did not create any textures for game scene yet)
+        gameTextureAtlas.unload();
+        
+        platform1_region = null;
+        platform2_region = null;
+        platform3_region = null;
+        switch_region = null;
+        flag_region = null;
+        player_region = null;
+        
     }
     
     public void loadSplashScreen()
