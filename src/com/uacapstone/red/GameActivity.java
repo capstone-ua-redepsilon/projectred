@@ -13,10 +13,14 @@ import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.WakeLockOptions;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
 import org.andengine.entity.scene.Scene;
-import org.andengine.ui.activity.BaseGameActivity;
+//import org.andengine.ui.activity.BaseGameActivity;
 
+import android.util.Log;
 import android.view.KeyEvent;
+import android.view.View;
 
+import com.google.android.gms.games.Games;
+import com.google.example.games.basegameutils.GoogleBaseGameActivity;
 import com.uacapstone.red.manager.ResourcesManager;
 import com.uacapstone.red.manager.SceneManager;
 
@@ -25,8 +29,10 @@ import com.uacapstone.red.manager.SceneManager;
  * @author www.matim-dev.com
  * @version 1.0
  */
-public class GameActivity extends BaseGameActivity
+public class GameActivity extends GoogleBaseGameActivity
 {
+	final static String TAG = "ButtonClicker2000";
+	
 	private BoundCamera camera;
 	private ResourcesManager resourcesManager;
     
@@ -88,5 +94,65 @@ public class GameActivity extends BaseGameActivity
     		finish();
         }
         return false; 
+    }
+
+    /**
+     * Called by the base class (BaseGameActivity) when sign-in has failed. For
+     * example, because the user hasn't authenticated yet. We react to this by
+     * showing the sign-in button.
+     */
+    @Override
+    public void onSignInFailed() {
+        Log.d(TAG, "Sign-in failed.");
+        //switchToScreen(R.id.screen_sign_in);
+    }
+
+    /**
+     * Called by the base class (BaseGameActivity) when sign-in succeeded. We
+     * react by going to our main screen.
+     */
+    @Override
+    public void onSignInSucceeded() {
+        Log.d(TAG, "Sign-in succeeded.");
+
+        // register listener so we are notified if we receive an invitation to play
+        // while we are in the game
+        
+        //Uncomment later
+        //Games.Invitations.registerInvitationListener(getApiClient(), this);
+
+        // if we received an invite via notification, accept it; otherwise, go to main screen
+        //also uncomment later
+        /*if (getInvitationId() != null) {
+            acceptInviteToRoom(getInvitationId());
+            return;
+        }*/
+        switchToMainScreen();
+    }
+    
+    void switchToScreen(int screenId) {
+        // make the requested screen visible; hide all others.
+        /*for (int id : SCREENS) {
+            findViewById(id).setVisibility(screenId == id ? View.VISIBLE : View.GONE);
+        }
+        mCurScreen = screenId;
+
+        // should we show the invitation popup?
+        boolean showInvPopup;
+        if (mIncomingInvitationId == null) {
+            // no invitation, so no popup
+            showInvPopup = false;
+        } else if (mMultiplayer) {
+            // if in multiplayer, only show invitation on main screen
+            showInvPopup = (mCurScreen == R.id.screen_main);
+        } else {
+            // single-player: show on main screen and gameplay screen
+            showInvPopup = (mCurScreen == R.id.screen_main || mCurScreen == R.id.screen_game);
+        }
+        findViewById(R.id.invitation_popup).setVisibility(showInvPopup ? View.VISIBLE : View.GONE);*/
+    }
+    
+    void switchToMainScreen() {
+        //switchToScreen(isSignedIn() ? R.id.screen_main : R.id.screen_sign_in);
     }
 }
