@@ -123,7 +123,7 @@ public abstract class Player extends AnimatedSprite
     }
     
     private void createPhysics(final Camera camera, PhysicsWorld physicsWorld)
-    {        
+    {
         body = PhysicsFactory.createBoxBody(physicsWorld, this, BodyType.DynamicBody, PhysicsFactory.createFixtureDef(0, 0, 0));
 
         body.setUserData("player");
@@ -146,4 +146,5 @@ public abstract class Player extends AnimatedSprite
             }
         });
     }
+    
 }
