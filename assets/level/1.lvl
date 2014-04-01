@@ -1,12 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<level width="550" height="780">    
-    <entity x="123" y="0" type="platform1"/>
-    <entity x="246" y="0" type="platform1"/>
-    <entity x="369" y="0" type="platform1"/>
-    <entity x="492" y="0" type="platform1"/>
-    <entity x="550" y="0" type="platform3"/>
-    <entity x="550" y="123" type="platform3"/>
-    <entity x="80" y="123" type="platform3"/>
-    <entity x="80" y="0" type="platform3"/>
-    <entity x="100" y="140" type="player" />
+<level width="650" height="780">    
+    <entity x="100" y="15" type="platform1"/>
+    <entity x="200" y="15" type="platform1"/>
+    <entity x="300" y="45" type="switch"/>
+    <entity x="300" y="15" type="platform1"/>
+    <entity x="300" y="300" type="platform1"/>
+    <entity x="300" y="330" type="flag"/>
+    <entity x="400" y="15" type="platform1"/>
+    <entity x="500" y="15" type="platform1"/>
+    <entity x="600" y="15" type="platform1"/>
+    <entity x="35" y="50" type="platform2"/>
+    <entity x="35" y="150" type="platform2"/>
+    <entity x="35" y="250" type="platform2"/>
+    <entity x="35" y="350" type="platform2"/>
+    <entity x="665" y="50" type="platform2"/>
+    <entity x="665" y="150" type="platform2"/>
+    <entity x="665" y="250" type="platform2"/>
+    <entity x="665" y="350" type="platform2"/>
+    <entity x="200" y="30" type="player" />
 </level>

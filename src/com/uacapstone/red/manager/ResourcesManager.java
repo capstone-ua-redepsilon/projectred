@@ -58,8 +58,8 @@ public class ResourcesManager
     // Game Texture Regions
     public ITextureRegion platform1_region;
     public ITextureRegion platform2_region;
-    public ITextureRegion platform3_region;
-    public ITextureRegion coin_region;
+    public ITextureRegion switch_region;
+    public ITextureRegion flag_region;
     
     public Font font;
     
@@ -131,8 +131,8 @@ public class ResourcesManager
         
         platform1_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "platform1.png");
         platform2_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "platform2.png");
-        platform3_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "platform3.png");
-        coin_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "coin.png");
+        switch_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "switch.png");
+        flag_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "flag.png");
         player_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "player.png", 3, 1);
         
         try 

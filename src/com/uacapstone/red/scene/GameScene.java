@@ -12,6 +12,7 @@ import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.Text;
 import org.andengine.entity.text.TextOptions;
+import org.andengine.extension.debugdraw.DebugRenderer;
 import org.andengine.extension.physics.box2d.FixedStepPhysicsWorld;
 import org.andengine.extension.physics.box2d.PhysicsConnector;
 import org.andengine.extension.physics.box2d.PhysicsFactory;
@@ -99,6 +100,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         physicsWorld = new FixedStepPhysicsWorld(60, new Vector2(0, -17), false); 
         physicsWorld.setContactListener(contactListener());
         registerUpdateHandler(physicsWorld);
+        DebugRenderer debug = new DebugRenderer(physicsWorld, vbom);
+        this.attachChild(debug);
     }
     
     private void addToScore(int i)
@@ -149,16 +152,16 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                     body.setUserData("platform2");
                     physicsWorld.registerPhysicsConnector(new PhysicsConnector(levelObject, body, true, false));
                 }
-                else if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLATFORM3))
+                else if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_SWITCH))
                 {
-                    levelObject = new Sprite(x, y, resourcesManager.platform3_region, vbom);
+                    levelObject = new Sprite(x, y, resourcesManager.switch_region, vbom);
                     final Body body = PhysicsFactory.createBoxBody(physicsWorld, levelObject, BodyType.StaticBody, FIXTURE_DEF);
-                    body.setUserData("platform3");
+                    body.setUserData("switch");
                     physicsWorld.registerPhysicsConnector(new PhysicsConnector(levelObject, body, true, false));
                 }
-                else if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_COIN))
+                else if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_FLAG))
                 {
-                    levelObject = new Sprite(x, y, resourcesManager.coin_region, vbom)
+                    levelObject = new Sprite(x, y, resourcesManager.flag_region, vbom)
                     {
                         @Override
                         protected void onManagedUpdate(float pSecondsElapsed) 
@@ -212,13 +215,19 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
             {
                 final Fixture x1 = contact.getFixtureA();
                 final Fixture x2 = contact.getFixtureB();
+                Fixture ft = null;
 
-                if (x1.getBody().getUserData() != null && x2.getBody().getUserData() != null)
+                if (x1.getUserData() != null && x1.getUserData().equals("feet"))
                 {
-                    if (x2.getBody().getUserData().equals("player"))
-                    {
-                        player.increaseFootContacts();
-                    }
+                	ft = x1;
+                }
+                else if (x2.getUserData() != null && x2.getUserData().equals("feet"))
+                {
+                	ft = x2;
+                }
+            	if (ft != null)
+            	{
+                    player.increaseFootContacts();
                 }
             }
 
@@ -226,13 +235,19 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
             {
                 final Fixture x1 = contact.getFixtureA();
                 final Fixture x2 = contact.getFixtureB();
+                Fixture ft = null;
 
-                if (x1.getBody().getUserData() != null && x2.getBody().getUserData() != null)
+                if (x1.getUserData() != null && x1.getUserData().equals("feet"))
                 {
-                    if (x2.getBody().getUserData().equals("player"))
-                    {
-                        player.decreaseFootContacts();
-                    }
+                	ft = x1;
+                }
+                else if (x2.getUserData() != null && x2.getUserData().equals("feet"))
+                {
+                	ft = x2;
+                }
+            	if (ft != null)
+            	{
+                    player.decreaseFootContacts();
                 }
             }
 
@@ -269,7 +284,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     private Player player;
     private Vector2 lastTouchCoords;
     private static int DRAG_DISTANCE = 50;
-    private static double MOVE_TOUCH_PERCENTAGE = .5;
+    private static double MOVE_TOUCH_PERCENTAGE = .2;
     private boolean hasJumped = false;
     private Text gameOverText;
     private boolean gameOverDisplayed = false;
@@ -281,8 +296,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         
     private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLATFORM1 = "platform1";
     private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLATFORM2 = "platform2";
-    private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLATFORM3 = "platform3";
-    private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_COIN = "coin";
+    private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_SWITCH = "switch";
+    private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_FLAG = "flag";
     private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLAYER = "player";
     
 	@Override

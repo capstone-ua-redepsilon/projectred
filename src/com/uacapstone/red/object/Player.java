@@ -10,6 +10,9 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
+import com.badlogic.gdx.physics.box2d.Fixture;
+import com.badlogic.gdx.physics.box2d.FixtureDef;
+import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.uacapstone.red.manager.ResourcesManager;
 
 /**
@@ -35,6 +38,7 @@ public abstract class Player extends AnimatedSprite
     // ---------------------------------------------
 	     
     private Body body;
+    private Fixture feet;
     private float velocity = 0;
     private int runDirection = 0;
     private float speed = 5;
@@ -125,7 +129,18 @@ public abstract class Player extends AnimatedSprite
     private void createPhysics(final Camera camera, PhysicsWorld physicsWorld)
     {        
         body = PhysicsFactory.createBoxBody(physicsWorld, this, BodyType.DynamicBody, PhysicsFactory.createFixtureDef(0, 0, 0));
-
+        
+        final PolygonShape mPoly = new PolygonShape();
+        mPoly.setAsBox(8.0f/PhysicsConnector.PIXEL_TO_METER_RATIO_DEFAULT,
+        		0.5f/PhysicsConnector.PIXEL_TO_METER_RATIO_DEFAULT,
+        		new Vector2(0,-16/PhysicsConnector.PIXEL_TO_METER_RATIO_DEFAULT),
+        		0); //The size of the character is 32x32
+        final FixtureDef pFixtureDef = PhysicsFactory.createFixtureDef(0f,0f,0f,true);
+        pFixtureDef.shape = mPoly;
+        feet=body.createFixture(pFixtureDef);
+        feet.setUserData("feet");
+        mPoly.dispose();
+        
         body.setUserData("player");
         body.setFixedRotation(true);
         
