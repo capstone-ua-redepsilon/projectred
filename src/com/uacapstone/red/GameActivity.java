@@ -5,7 +5,6 @@ import java.io.IOException;
 import org.andengine.engine.Engine;
 import org.andengine.engine.LimitedFPSEngine;
 import org.andengine.engine.camera.BoundCamera;
-import org.andengine.engine.camera.Camera;
 import org.andengine.engine.handler.timer.ITimerCallback;
 import org.andengine.engine.handler.timer.TimerHandler;
 import org.andengine.engine.options.EngineOptions;
@@ -19,6 +18,9 @@ import android.view.KeyEvent;
 
 import com.uacapstone.red.manager.ResourcesManager;
 import com.uacapstone.red.manager.SceneManager;
+import com.uacapstone.red.networking.client.Client;
+import com.uacapstone.red.networking.server.Server;
+import com.uacapstone.red.networking.server.ServerMovePlayerMessage;
 
 /**
  * @author Mateusz Mysliwiec
@@ -27,6 +29,12 @@ import com.uacapstone.red.manager.SceneManager;
  */
 public class GameActivity extends BaseGameActivity
 {
+	private static final String LOCALHOST_IP = "127.0.0.1";
+	private static final String SERVER_PORT = "4444";
+	
+	private static Server server;
+	private static Client client;
+	
 	private BoundCamera camera;
 	private ResourcesManager resourcesManager;
     
@@ -49,6 +57,44 @@ public class GameActivity extends BaseGameActivity
     public void onCreateScene(OnCreateSceneCallback pOnCreateSceneCallback) throws IOException
     {
     	SceneManager.getInstance().createSplashScene(pOnCreateSceneCallback);
+    	
+    	
+    	try {
+    		server = new Server(SERVER_PORT);
+    		System.out.println("Creating server in new thread...");
+    		new Thread(new Runnable() {
+
+				@Override
+				public void run() {
+					try {
+						server.startServer();
+						System.out.println("Created!");
+					} catch (Exception e) {
+			    		System.err.println(e);
+			    	}
+					
+				}
+    			
+    		}).start();
+    		
+    		System.out.println("Sleeping...");
+    		Thread.sleep(2500);
+    	} catch (Exception e) {
+    		System.err.println(e);
+    	}
+    	
+    	
+    	
+    	try {
+    		System.out.println("Creating client");
+    		client = new Client(LOCALHOST_IP, SERVER_PORT);
+    		System.out.println("Connecting to server");
+    		client.connectToServer();
+    		System.out.println("Sending Test Message...");
+    		client.sendMessage(new ServerMovePlayerMessage(0, 1, 2));
+    	} catch (Exception e) {
+    		System.err.println(e);
+    	}
     }
 
     public void onPopulateScene(Scene pScene, OnPopulateSceneCallback pOnPopulateSceneCallback) throws IOException
