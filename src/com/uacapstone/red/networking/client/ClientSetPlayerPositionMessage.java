@@ -4,11 +4,13 @@ package com.uacapstone.red.networking.client;
 import org.msgpack.annotation.Message;
 
 import com.uacapstone.red.networking.messaging.MessageType;
-import com.uacapstone.red.networking.server.ServerMessage;
+import com.uacapstone.red.networking.messaging.NetworkMessage;
 
 @Message
-public class ClientSetPlayerPositionMessage extends ServerMessage {
+public class ClientSetPlayerPositionMessage extends NetworkMessage {
 
+	protected short messageType = MessageType.ServerMovePlayerMessage;
+	
 	private int playerId;
 	private int newX;
 	private int newY;
@@ -17,11 +19,6 @@ public class ClientSetPlayerPositionMessage extends ServerMessage {
 		this.playerId = playerId;
 		this.newX = x;
 		this.newY = y;
-	}
-	
-	@Override
-	public MessageType getMessageType() {
-		return MessageType.ServerMovePlayerMessage;
 	}
 	
 	public int getPlayerId() {

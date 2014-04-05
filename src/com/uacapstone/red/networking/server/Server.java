@@ -4,6 +4,7 @@ import org.msgpack.MessagePack;
 import org.zeromq.ZMQ;
 
 import com.uacapstone.red.networking.client.ClientSetPlayerPositionMessage;
+import com.uacapstone.red.networking.messaging.MessageType;
 import com.uacapstone.red.networking.messaging.NetworkMessage;
 
 public class Server {
@@ -18,26 +19,45 @@ public class Server {
 	}
 	
 	public void startServer() throws Exception {
-		System.out.println("ZZZ");
 		ZMQ.Socket socket = context.socket(ZMQ.REP);
 
         socket.bind ("tcp://*:"+port);
 
-        MessagePack msgpack = new MessagePack();
+//        MessagePack msgpack = new MessagePack();
         System.out.println("Server is running!");
         
         while (!Thread.currentThread().isInterrupted()) {
 
             byte[] serverMessageBytes = socket.recv(0);
-            NetworkMessage serverMessage = msgpack.read(serverMessageBytes, NetworkMessage.class);
+            NetworkMessage serverMessage = new NetworkMessage();
+            serverMessage.deserialize(serverMessageBytes);
+            
+            NetworkMessage reply = null;
+            
+            switch (serverMessage.getMessageType()) {
+            case MessageType.ServerMovePlayerMessage:
+            	System.out.println("Move-player message received.");
+    			ServerMovePlayerMessage m = new ServerMovePlayerMessage();
+    			m.deserialize(serverMessageBytes);
+    			
+    			reply = new ClientSetPlayerPositionMessage(m.getPlayerId(), m.getX(), m.getY());
+    			break;
+            case MessageType.ServerNoMessage:
+            	System.out.println("No message received....");
+    			break;
+    		default:
+    			System.out.println("Unknown message received.");
+    			break;
+            }
             
             System.out.println("serverMessage received!: " + serverMessage);
             
-            NetworkMessage clientMessage = processMessage(serverMessage);
+//            NetworkMessage clientMessage = processMessage(serverMessage);
+            
+            NetworkMessage clientMessage = reply;
             
             if (clientMessage != null) {
-            	byte[] clientMessageBytes = msgpack.write(clientMessage);
-            	socket.send(clientMessageBytes);
+            	socket.send(clientMessage.serialize());
             }
             
             Thread.sleep(1000);
@@ -45,26 +65,5 @@ public class Server {
         
         socket.close();
         this.context.term();
-	}
-	
-	private NetworkMessage processMessage(NetworkMessage message) {
-		
-		NetworkMessage reply = null;
-		
-		switch(message.getMessageType()) {
-		case ServerMovePlayerMessage:
-			System.out.println("Move-player message received.");
-			ServerMovePlayerMessage m = (ServerMovePlayerMessage)message;
-			reply = new ClientSetPlayerPositionMessage(m.getPlayerId(), m.getX(), m.getY());
-			break;
-		case ServerNoMessage:
-			System.out.println("No message received....");
-			break;
-		default:
-			System.out.println("Unknown message received.");
-			break;
-		}
-		
-		return reply;
 	}
 }

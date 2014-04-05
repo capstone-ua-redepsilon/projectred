@@ -19,6 +19,7 @@ import android.view.KeyEvent;
 import com.uacapstone.red.manager.ResourcesManager;
 import com.uacapstone.red.manager.SceneManager;
 import com.uacapstone.red.networking.client.Client;
+import com.uacapstone.red.networking.messaging.NetworkMessage;
 import com.uacapstone.red.networking.server.Server;
 import com.uacapstone.red.networking.server.ServerMovePlayerMessage;
 

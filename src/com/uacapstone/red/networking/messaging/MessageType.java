@@ -1,13 +1,6 @@
 package com.uacapstone.red.networking.messaging;
 
-//public interface MessageType {
-//	public short getMessageType();
-//}
-
-public enum MessageType {
-	ServerConnectionClosed,
-	ServerConnectionEstablished,
-	ServerConnectionRejected,
-	ServerMovePlayerMessage,
-	ServerNoMessage;
+public interface MessageType {
+	static final short ServerNoMessage = (short)0;
+	static final short ServerMovePlayerMessage = (short)1;
 }
