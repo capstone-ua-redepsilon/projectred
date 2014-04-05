@@ -98,6 +98,8 @@ public class MultiplayerExample extends SimpleBaseGameActivity implements Client
 
     private final MessagePool<IMessage> mMessagePool = new MessagePool<IMessage>();
 
+    private boolean isServerOrClientChosen;
+    
     // ===========================================================
     // Constructors
     // ===========================================================
@@ -122,7 +124,7 @@ public class MultiplayerExample extends SimpleBaseGameActivity implements Client
     @Override
     public EngineOptions onCreateEngineOptions() {
         this.showDialog(DIALOG_CHOOSE_SERVER_OR_CLIENT_ID);
-
+        
         final Camera camera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
 
         return new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED, new RatioResolutionPolicy(CAMERA_WIDTH, CAMERA_HEIGHT), camera);
@@ -145,9 +147,11 @@ public class MultiplayerExample extends SimpleBaseGameActivity implements Client
         final Scene scene = new Scene();
         scene.setBackground(new Background(0.09804f, 0.6274f, 0.8784f));
 
+        // wait until the server or client is chosen.
+        while (!isServerOrClientChosen) {}
+        
         /* We allow only the server to actively send around messages. */
         if(MultiplayerExample.this.mSocketServer != null) {
-        	MultiplayerExample.this.toast("This device is server");
             scene.setOnSceneTouchListener(new IOnSceneTouchListener() {
                 @Override
                 public boolean onSceneTouchEvent(final Scene pScene, final TouchEvent pSceneTouchEvent) {
@@ -178,15 +182,6 @@ public class MultiplayerExample extends SimpleBaseGameActivity implements Client
 					final MoveFaceServerMessage moveFaceServerMessage = (MoveFaceServerMessage) MultiplayerExample.this.mMessagePool.obtainMessage(FLAG_MESSAGE_SERVER_MOVE_FACE);
 					moveFaceServerMessage.set(faceID, pSceneTouchEvent.getX(), pSceneTouchEvent.getY());
 
-//					(new Runnable() {
-//
-//						@Override
-//						public void run() {
-//							MultiplayerExample.this.mSocketServer.sendBroadcastServerMessage(moveFaceServerMessage);							
-//						}
-//						
-//					}).run();
-
 					MultiplayerExample.this.mSocketServer.sendBroadcastServerMessage(moveFaceServerMessage);							
 					
 					MultiplayerExample.this.mMessagePool.recycleMessage(moveFaceServerMessage);
@@ -195,8 +190,6 @@ public class MultiplayerExample extends SimpleBaseGameActivity implements Client
             });
 
             scene.setTouchAreaBindingOnActionDownEnabled(true);
-        } else {
-        	MultiplayerExample.this.toast("This device is not server");
         }
 
         return scene;
@@ -258,6 +251,7 @@ public class MultiplayerExample extends SimpleBaseGameActivity implements Client
                     @Override
                     public void onClick(final DialogInterface pDialog, final int pWhich) {
                         MultiplayerExample.this.showDialog(DIALOG_ENTER_SERVER_IP_ID);
+                        isServerOrClientChosen = true;
                     }
                 })
                 .setNeutralButton("Server", new OnClickListener() {
@@ -266,6 +260,7 @@ public class MultiplayerExample extends SimpleBaseGameActivity implements Client
                         MultiplayerExample.this.toast("You can add and move sprites, which are only shown on the clients.");
                         MultiplayerExample.this.initServer();
                         MultiplayerExample.this.showDialog(DIALOG_SHOW_SERVER_IP_ID);
+                        isServerOrClientChosen = true;
                     }
                 })
                 .setNegativeButton("Both", new OnClickListener() {
@@ -274,6 +269,7 @@ public class MultiplayerExample extends SimpleBaseGameActivity implements Client
                         MultiplayerExample.this.toast("You can add sprites and move them, by dragging them.");
                         MultiplayerExample.this.initServerAndClient();
                         MultiplayerExample.this.showDialog(DIALOG_SHOW_SERVER_IP_ID);
+                        isServerOrClientChosen = true;
                     }
                 })
                 .create();
@@ -351,11 +347,13 @@ public class MultiplayerExample extends SimpleBaseGameActivity implements Client
     }
     
     private void initServer() {
-        new InitServerTask().execute(null, null, null);
+    	Thread serverThread = new Thread(new ServerThread());
+    	serverThread.start();
     }
 
     private void initClient() {
-        new InitClientTask().execute(null, null, null);
+    	Thread clientThread = new Thread(new ClientThread());
+    	clientThread.start();
     }
 
     private void log(final String pMessage) {
@@ -417,27 +415,28 @@ public class MultiplayerExample extends SimpleBaseGameActivity implements Client
         }
     }
     
-    private class InitServerTask extends AsyncTask<Object, Object, Object> {
+    private class ServerThread implements Runnable {
 
 		@Override
-		protected Object doInBackground(Object... arg0) {
+		public void run() {
+			System.out.println("mSocketServer = " + MultiplayerExample.this.mSocketServer);
 			MultiplayerExample.this.mSocketServer = new SocketServer<SocketConnectionClientConnector>(SERVER_PORT, new ExampleClientConnectorListener(), new ExampleServerStateListener()) {
 	            @Override
 	            protected SocketConnectionClientConnector newClientConnector(final SocketConnection pSocketConnection) throws IOException {
 	                return new SocketConnectionClientConnector(pSocketConnection);
 	            }
 	        };
-
+	        
+	        System.out.println("mSocketServer = " + MultiplayerExample.this.mSocketServer);
 	        MultiplayerExample.this.mSocketServer.start();
-			return null;
 		}
     	
     }
     
-    private class InitClientTask extends AsyncTask<Object, Object, Object> {
-    	
+    private class ClientThread implements Runnable {
+
 		@Override
-		protected Object doInBackground(Object... arg0) {
+		public void run() {
 			try {
 				MultiplayerExample.this.mServerConnector = new SocketConnectionServerConnector(new SocketConnection(new Socket(MultiplayerExample.this.mServerIP, SERVER_PORT)), new ExampleServerConnectorListener());
 
@@ -468,7 +467,6 @@ public class MultiplayerExample extends SimpleBaseGameActivity implements Client
 	        } catch (final Throwable t) {
 	            Debug.e(t);
 	        }
-			return null;
 		}
     	
     }
