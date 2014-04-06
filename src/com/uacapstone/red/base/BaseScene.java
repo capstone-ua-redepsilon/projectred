@@ -7,6 +7,7 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
 import android.app.Activity;
 
+import com.uacapstone.red.GameActivity;
 import com.uacapstone.red.manager.ResourcesManager;
 import com.uacapstone.red.manager.SceneManager.SceneType;
 
@@ -22,7 +23,7 @@ public abstract class BaseScene extends Scene
     //---------------------------------------------
     
     protected Engine engine;
-    protected Activity activity;
+    protected GameActivity activity;
     protected ResourcesManager resourcesManager;
     protected VertexBufferObjectManager vbom;
     protected BoundCamera camera;
