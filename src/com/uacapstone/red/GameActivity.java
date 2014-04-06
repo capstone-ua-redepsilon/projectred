@@ -58,44 +58,6 @@ public class GameActivity extends BaseGameActivity
     public void onCreateScene(OnCreateSceneCallback pOnCreateSceneCallback) throws IOException
     {
     	SceneManager.getInstance().createSplashScene(pOnCreateSceneCallback);
-    	
-    	
-    	try {
-    		server = new Server(SERVER_PORT);
-    		System.out.println("Creating server in new thread...");
-    		new Thread(new Runnable() {
-
-				@Override
-				public void run() {
-					try {
-						server.startServer();
-						System.out.println("Created!");
-					} catch (Exception e) {
-			    		System.err.println(e);
-			    	}
-					
-				}
-    			
-    		}).start();
-    		
-    		System.out.println("Sleeping...");
-    		Thread.sleep(2500);
-    	} catch (Exception e) {
-    		System.err.println(e);
-    	}
-    	
-    	
-    	
-    	try {
-    		System.out.println("Creating client");
-    		client = new Client(LOCALHOST_IP, SERVER_PORT);
-    		System.out.println("Connecting to server");
-    		client.connectToServer();
-    		System.out.println("Sending Test Message...");
-    		client.sendMessage(new ServerMovePlayerMessage(0, 1, 2));
-    	} catch (Exception e) {
-    		System.err.println(e);
-    	}
     }
 
     public void onPopulateScene(Scene pScene, OnPopulateSceneCallback pOnPopulateSceneCallback) throws IOException

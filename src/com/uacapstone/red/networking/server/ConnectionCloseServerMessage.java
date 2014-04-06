@@ -6,6 +6,8 @@ import java.io.IOException;
 
 import org.andengine.extension.multiplayer.adt.message.server.ServerMessage;
 
+import com.uacapstone.red.networking.messaging.ServerMessageFlags;
+
 public class ConnectionCloseServerMessage extends ServerMessage implements ServerMessageFlags {
 	public ConnectionCloseServerMessage() {
 
