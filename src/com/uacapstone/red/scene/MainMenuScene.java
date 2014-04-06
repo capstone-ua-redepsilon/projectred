@@ -52,6 +52,7 @@ public class MainMenuScene extends BaseScene implements IOnMenuItemClickListener
 	
 	private MenuScene menuChildScene;
 	private final int MENU_PLAY = 0;
+	private final int MENU_SIGN_OUT = 1;
 
 	private void createMenuChildScene()
 	{
@@ -60,12 +61,18 @@ public class MainMenuScene extends BaseScene implements IOnMenuItemClickListener
 	    
 	    final IMenuItem playMenuItem = new ScaleMenuItemDecorator(new SpriteMenuItem(MENU_PLAY, resourcesManager.play_region, vbom), 1.02f, 1);
 	    
+	    final IMenuItem signOutMenuItem = new ScaleMenuItemDecorator(new SpriteMenuItem(MENU_SIGN_OUT, resourcesManager.play_region, vbom), 1.02f, 1);
+	    
 	    menuChildScene.addMenuItem(playMenuItem);
+	    
+	    menuChildScene.addMenuItem(signOutMenuItem);
 	    
 	    menuChildScene.buildAnimations();
 	    menuChildScene.setBackgroundEnabled(false);
 	    
 	    playMenuItem.setPosition(playMenuItem.getX(), playMenuItem.getY() + 10);
+	    
+	    playMenuItem.setPosition(playMenuItem.getX(), playMenuItem.getY() + 20);
 	    
 	    menuChildScene.setOnMenuItemClickListener(this);
 	    
@@ -80,6 +87,10 @@ public class MainMenuScene extends BaseScene implements IOnMenuItemClickListener
         case MENU_PLAY:
             //Load Game Scene!
             SceneManager.getInstance().loadGameScene(engine);
+            return true;
+        case MENU_SIGN_OUT:
+            //Load Game Scene!
+            activity.StartQuickGame();
             return true;
         default:
             return false;
