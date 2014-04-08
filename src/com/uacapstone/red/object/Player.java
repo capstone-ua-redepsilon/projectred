@@ -26,17 +26,18 @@ public abstract class Player extends AnimatedSprite
     // CONSTRUCTOR
     // ---------------------------------------------
     
-    public Player(float pX, float pY, VertexBufferObjectManager vbo, Camera camera, PhysicsWorld physicsWorld)
+    public Player(float pX, float pY, VertexBufferObjectManager vbo, Camera camera, PhysicsWorld physicsWorld, int id)
     {
         super(pX, pY, ResourcesManager.getInstance().player_region, vbo);
+    	mId = id;
         createPhysics(camera, physicsWorld);
-        camera.setChaseEntity(this);
     }
     
     // ---------------------------------------------
     // VARIABLES
     // ---------------------------------------------
 	     
+    private int mId;
     private Body body;
     private Fixture feet;
     private float velocity = 0;
@@ -141,10 +142,10 @@ public abstract class Player extends AnimatedSprite
         final FixtureDef pFixtureDef = PhysicsFactory.createFixtureDef(0f,0f,0f,true);
         pFixtureDef.shape = mPoly;
         feet=body.createFixture(pFixtureDef);
-        feet.setUserData("feet");
+        feet.setUserData(new PlayerData(mId, "feet"));
         mPoly.dispose();
         
-        body.setUserData("player");
+        body.setUserData(new PlayerData(mId, "player"));
         body.setFixedRotation(true);
         
         physicsWorld.registerPhysicsConnector(new PhysicsConnector(this, body, true, false)

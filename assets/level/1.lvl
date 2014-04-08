@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<level width="650" height="780">    
+<level width="650" height="780" numPlayers="2">    
     <entity x="100" y="15" type="platform1"/>
     <entity x="200" y="15" type="platform1"/>
     <entity x="300" y="45" type="switch"/>
@@ -18,4 +18,5 @@
     <entity x="665" y="250" type="platform2"/>
     <entity x="665" y="350" type="platform2"/>
     <entity x="200" y="30" type="player" />
+    <entity x="250" y="30" type="player" />
 </level>

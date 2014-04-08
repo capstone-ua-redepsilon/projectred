@@ -42,6 +42,7 @@ import com.uacapstone.red.base.BaseScene;
 import com.uacapstone.red.manager.SceneManager;
 import com.uacapstone.red.manager.SceneManager.SceneType;
 import com.uacapstone.red.object.Player;
+import com.uacapstone.red.object.PlayerData;
 
 public class GameScene extends BaseScene implements IOnSceneTouchListener
 {
@@ -152,6 +153,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
             {
                 final int width = SAXUtils.getIntAttributeOrThrow(pAttributes, LevelConstants.TAG_LEVEL_ATTRIBUTE_WIDTH);
                 final int height = SAXUtils.getIntAttributeOrThrow(pAttributes, LevelConstants.TAG_LEVEL_ATTRIBUTE_HEIGHT);
+                final int nPlayers = SAXUtils.getIntAttributeOrThrow(pAttributes, "numPlayers");
+                players = new Player[nPlayers];
+                mId = activity.getNormalizedId();
                 
                 camera.setBounds(0, 0, width, height); // here we set camera bounds
                 camera.setBoundsEnabled(true);
@@ -199,11 +203,14 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                         {
                             super.onManagedUpdate(pSecondsElapsed);
 
-                            if (player.collidesWith(this))
+                            for (Player p : players)
                             {
-                                addToScore(10);
-                                this.setVisible(false);
-                                this.setIgnoreUpdate(true);
+                                if (p.collidesWith(this))
+                                {
+                                    addToScore(10);
+                                    this.setVisible(false);
+                                    this.setIgnoreUpdate(true);
+                                }
                             }
                         }
                     };
@@ -211,7 +218,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 }     
                 else if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLAYER))
                 {
-                	player = new Player(x, y, vbom, camera, physicsWorld)
+                	Player p = new Player(x, y, vbom, camera, physicsWorld, numPlayers)
                 	{
                 		@Override
                 		public void onDie()
@@ -222,7 +229,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 		    }
                 		}
                 	};
-                	levelObject = player;
+                	levelObject = p;
+                	players[numPlayers++] = p;
                 }
                 else
                 {
@@ -236,6 +244,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         });
 
         levelLoader.loadLevelFromAsset(activity.getAssets(), "level/" + levelID + ".lvl");
+        player = players[mId];
+        camera.setChaseEntity(player);
     }
     
     private ContactListener contactListener()
@@ -246,52 +256,82 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
             {
                 final Fixture x1 = contact.getFixtureA();
                 final Fixture x2 = contact.getFixtureB();
+                PlayerData pd1, pd2, pd = null;
                 Fixture ft = null;
                 Fixture o = null;
 
-                if (x1.getUserData() != null && x1.getUserData().equals("feet"))
+                if (x1.getUserData() != null && x1.getUserData() instanceof PlayerData)
                 {
-                	ft = x1;
-                	o = x2;
+                	pd1 = (PlayerData)x1.getUserData();
+                	if (pd1.mDescription == "feet")
+                	{
+                		pd = pd1;
+                    	ft = x1;
+                    	o = x2;
+                	}
                 }
-                else if (x2.getUserData() != null && x2.getUserData().equals("feet"))
+                else if (x2.getUserData() != null && x2.getUserData() instanceof PlayerData)
                 {
-                	ft = x2;
-                	o = x1;
+                	pd2 = (PlayerData)x2.getUserData();
+                	if (pd2.mDescription == "feet")
+                	{
+                		pd = pd2;
+                    	ft = x2;
+                    	o = x1;
+                	}
                 }
-            	if (ft != null)
+            	if (ft != null && pd != null)
             	{
-                    player.increaseFootContacts();
-                    if (o.getBody().getUserData() != null && o.getBody().getUserData().equals("switch") && hiddenPlatformBody == null)
+                    players[Integer.parseInt(pd.mId)].increaseFootContacts();
+                    if (o.getBody().getUserData() != null && o.getBody().getUserData().equals("switch"))
                     {
-                    	spritesToAdd.add(hiddenPlatformSprite);
+                    	mNumPlayersOnSwitch++;
+                    	if (mNumPlayersOnSwitch == 1)
+                    	{
+                    		spritesToAdd.add(hiddenPlatformSprite);
+                    	}
                     }
                 }
             }
 
             public void endContact(Contact contact)
             {
-                final Fixture x1 = contact.getFixtureA();
+            	final Fixture x1 = contact.getFixtureA();
                 final Fixture x2 = contact.getFixtureB();
+                PlayerData pd1, pd2, pd = null;
                 Fixture ft = null;
                 Fixture o = null;
 
-                if (x1.getUserData() != null && x1.getUserData().equals("feet"))
+                if (x1.getUserData() != null && x1.getUserData() instanceof PlayerData)
                 {
-                	ft = x1;
-                	o = x2;
+                	pd1 = (PlayerData)x1.getUserData();
+                	if (pd1.mDescription == "feet")
+                	{
+                		pd = pd1;
+                    	ft = x1;
+                    	o = x2;
+                	}
                 }
-                else if (x2.getUserData() != null && x2.getUserData().equals("feet"))
+                else if (x2.getUserData() != null && x2.getUserData() instanceof PlayerData)
                 {
-                	ft = x2;
-                	o = x1;
+                	pd2 = (PlayerData)x2.getUserData();
+                	if (pd2.mDescription == "feet")
+                	{
+                		pd = pd2;
+                    	ft = x2;
+                    	o = x1;
+                	}
                 }
-            	if (ft != null)
+            	if (ft != null && pd != null)
             	{
-                    player.decreaseFootContacts();
+                    players[Integer.parseInt(pd.mId)].decreaseFootContacts();
                     if (o.getBody().getUserData() != null && o.getBody().getUserData().equals("switch"))
                     {
-                    	bodiesToRemove.add(hiddenPlatformBody);
+                    	mNumPlayersOnSwitch--;
+                    	if (mNumPlayersOnSwitch == 0)
+                    	{
+                    		bodiesToRemove.add(hiddenPlatformBody);
+                    	}
                     }
                 }
             }
@@ -326,7 +366,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     private Text scoreText;
     private int score = 0;
     private PhysicsWorld physicsWorld;
+    private Player[] players;
     private Player player;
+    private int mId;
+	private int numPlayers = 0;
     private Vector2 lastTouchCoords;
     private static int DRAG_DISTANCE = 50;
     private static double MOVE_TOUCH_PERCENTAGE = .2;
@@ -337,6 +380,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 	private Sprite hiddenPlatformSprite;
 	private ArrayList<Sprite> spritesToAdd = new ArrayList<Sprite>();
 	private ArrayList<Body> bodiesToRemove = new ArrayList<Body>();
+	private int mNumPlayersOnSwitch = 0;
     
     private static final String TAG_ENTITY = "entity";
     private static final String TAG_ENTITY_ATTRIBUTE_X = "x";
@@ -368,6 +412,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 				xdir = 1;
 			}
 			player.setRunDirection(xdir);
+			byte[] message = new byte[8];
+			message[0] = (byte)mId;
+			message[1] = (byte)0;
+			message[2] = (byte)xdir;
+			activity.sendMessage(message);
 		}
 		else if (pSceneTouchEvent.isActionMove())
 		{
@@ -379,6 +428,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 			{
 				hasJumped = true;
 				player.jump();
+				byte[] message = new byte[8];
+				message[0] = (byte)mId;
+				message[1] = (byte)1;
+				activity.sendMessage(message);
 			}
 		}
 		else if (pSceneTouchEvent.isActionUp())
@@ -386,6 +439,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 			if (player.isRunning())
 			{
 				player.setRunDirection(0);
+				byte[] message = new byte[8];
+				message[0] = (byte)mId;
+				message[1] = (byte)0;
+				message[2] = (byte)0;
+				activity.sendMessage(message);
 			}
 			if (hasJumped)
 			{
@@ -393,5 +451,23 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 			}
 		}
 		return false;
+	}
+	
+	
+	
+	public void handleMessage(byte[] message)
+	{
+		int i = message[0];
+		int t = message[1];
+		if (t == 0)
+		{
+			float d = (float)message[2];
+			players[i].setRunDirection(d);
+		}
+		else
+		{
+			players[i].jump();
+		}
+		
 	}
 }

@@ -2,6 +2,7 @@ package com.uacapstone.red;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +66,7 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
     String mMyId = null;
 
     // Message buffer for sending messages
-    byte[] mMsgBuf = new byte[2];
+    byte[] mMsgBuf = new byte[8];
     
     // Score of other participants. We update this as we receive their scores
     // from the network.
@@ -271,11 +272,20 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
         mRoomId = room.getRoomId();
         mParticipants = room.getParticipants();
         mMyId = room.getParticipantId(Games.Players.getCurrentPlayerId(getApiClient()));
+        ArrayList<String> ids = new ArrayList<String>(room.getParticipantIds());
+        Collections.sort(ids);
+        normalizedId = ids.indexOf(mMyId);
 
         // print out the list of participants (for debug purposes)
         Log.d(TAG, "Room ID: " + mRoomId);
         Log.d(TAG, "My ID " + mMyId);
         Log.d(TAG, "<< CONNECTED TO ROOM>>");
+	}
+	
+	private int normalizedId = -1;
+	public int getNormalizedId()
+	{
+		return normalizedId;
 	}
 
 	@Override
@@ -363,7 +373,8 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
     public void onRealTimeMessageReceived(RealTimeMessage rtm) {
     	//BaseScene gameScene = SceneManager.getInstance().
         byte[] buf = rtm.getMessageData();
-        String sender = rtm.getSenderParticipantId();
+        SceneManager.getInstance().getGameScene().handleMessage(buf);
+        /*String sender = rtm.getSenderParticipantId();
         Log.d(TAG, "Message received: " + (char) buf[0] + "/" + (int) buf[1]);
 
         if (buf[0] == 'F' || buf[0] == 'U') {
@@ -390,6 +401,15 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
             if ((char) buf[0] == 'F') {
                 //mFinishedParticipants.add(rtm.getSenderParticipantId());
             }
+        }*/
+    }
+    
+    public void sendMessage(byte[] message)
+    {
+        for (Participant p : mParticipants) {
+            if (p.getParticipantId().equals(mMyId))
+                continue;
+        	Games.RealTimeMultiplayer.sendUnreliableMessage(getApiClient(), message, mRoomId, p.getParticipantId());
         }
     }
     
