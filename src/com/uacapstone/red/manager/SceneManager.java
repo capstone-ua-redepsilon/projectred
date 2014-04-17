@@ -24,7 +24,7 @@ public class SceneManager
     
     private BaseScene splashScene;
     private BaseScene menuScene;
-    private BaseScene gameScene;
+    private GameScene gameScene;
     private BaseScene loadingScene;
     
     //---------------------------------------------
@@ -50,6 +50,11 @@ public class SceneManager
     //---------------------------------------------
     // CLASS LOGIC
     //---------------------------------------------
+    
+    public GameScene getGameScene()
+    {
+    	return gameScene;
+    }
     
     public void setScene(BaseScene scene)
     {
