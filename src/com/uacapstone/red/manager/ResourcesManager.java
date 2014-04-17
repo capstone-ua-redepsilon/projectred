@@ -57,6 +57,7 @@ public class ResourcesManager
     public BuildableBitmapTextureAtlas gameTextureAtlas;
         
     // Game Texture Regions
+    public ITextureRegion block_region;
     public ITextureRegion platform1_region;
     public ITextureRegion platform2_region;
     public ITextureRegion platform3_region;
@@ -131,7 +132,8 @@ public class ResourcesManager
     {
     	BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/game/");
         gameTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR);
-        
+
+        block_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "block.png");
         platform1_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "platform1.png");
         platform2_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "platform2.png");
         platform3_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "platform3.png");
@@ -164,6 +166,7 @@ public class ResourcesManager
     {
         gameTextureAtlas.unload();
         
+        block_region = null;
         platform1_region = null;
         platform2_region = null;
         platform3_region = null;

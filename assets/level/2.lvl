@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<level width="650" height="780" numPlayers="1">    
+    <entity x="100" y="16" type="block"/>  
+    <entity x="132" y="16" type="block"/>  
+    <entity x="164" y="16" type="block"/>  
+    <entity x="196" y="16" type="block"/>
+    <entity x="132" y="48" type="player" />
+</level>

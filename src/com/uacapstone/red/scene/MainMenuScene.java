@@ -86,7 +86,7 @@ public class MainMenuScene extends BaseScene implements IOnMenuItemClickListener
         {
         case MENU_SOLO:
             //Load Game Scene!
-            SceneManager.getInstance().loadGameScene(engine);
+            SceneManager.getInstance().loadSoloGameScene(engine);
             return true;
         case MENU_QUICK:
             //Load Game Scene!
