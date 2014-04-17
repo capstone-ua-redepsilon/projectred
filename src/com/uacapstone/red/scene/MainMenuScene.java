@@ -51,28 +51,28 @@ public class MainMenuScene extends BaseScene implements IOnMenuItemClickListener
 	}
 	
 	private MenuScene menuChildScene;
-	private final int MENU_PLAY = 0;
-	private final int MENU_SIGN_OUT = 1;
+	private final int MENU_SOLO = 0;
+	private final int MENU_QUICK = 1;
 
 	private void createMenuChildScene()
 	{
 	    menuChildScene = new MenuScene(camera);
 	    menuChildScene.setPosition(190, 120);
 	    
-	    final IMenuItem playMenuItem = new ScaleMenuItemDecorator(new SpriteMenuItem(MENU_PLAY, resourcesManager.play_region, vbom), 1.02f, 1);
+	    final IMenuItem soloMenuItem = new ScaleMenuItemDecorator(new SpriteMenuItem(MENU_SOLO, resourcesManager.solo_region, vbom), .75f, .7f);
 	    
-	    final IMenuItem signOutMenuItem = new ScaleMenuItemDecorator(new SpriteMenuItem(MENU_SIGN_OUT, resourcesManager.play_region, vbom), 1.02f, 1);
+	    final IMenuItem quickMenuItem = new ScaleMenuItemDecorator(new SpriteMenuItem(MENU_QUICK, resourcesManager.quick_region, vbom), .75f, .7f);
 	    
-	    menuChildScene.addMenuItem(playMenuItem);
+	    menuChildScene.addMenuItem(soloMenuItem);
 	    
-	    menuChildScene.addMenuItem(signOutMenuItem);
+	    menuChildScene.addMenuItem(quickMenuItem);
 	    
 	    menuChildScene.buildAnimations();
 	    menuChildScene.setBackgroundEnabled(false);
 	    
-	    playMenuItem.setPosition(playMenuItem.getX(), playMenuItem.getY() + 10);
+	    soloMenuItem.setPosition(soloMenuItem.getX(), soloMenuItem.getY() - 10);
 	    
-	    playMenuItem.setPosition(playMenuItem.getX(), playMenuItem.getY() + 20);
+	    quickMenuItem.setPosition(quickMenuItem.getX(), quickMenuItem.getY() - 20);
 	    
 	    menuChildScene.setOnMenuItemClickListener(this);
 	    
@@ -84,11 +84,11 @@ public class MainMenuScene extends BaseScene implements IOnMenuItemClickListener
 	{
         switch(pMenuItem.getID())
         {
-        case MENU_PLAY:
+        case MENU_SOLO:
             //Load Game Scene!
             SceneManager.getInstance().loadGameScene(engine);
             return true;
-        case MENU_SIGN_OUT:
+        case MENU_QUICK:
             //Load Game Scene!
             activity.StartQuickGame();
             return true;
