@@ -47,6 +47,8 @@ public class ResourcesManager
     public ITextureRegion menu_background_region;
     public ITextureRegion solo_region;
     public ITextureRegion quick_region;
+    public ITextureRegion friends_region;
+    public ITextureRegion invites_region;
     public ITextureRegion options_region;
     public ITiledTextureRegion player_region;
     
@@ -91,6 +93,8 @@ public class ResourcesManager
     	menu_background_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(menuTextureAtlas, activity, "background.png");
     	solo_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(menuTextureAtlas, activity, "solo.png");
     	quick_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(menuTextureAtlas, activity, "quick.png");
+    	friends_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(menuTextureAtlas, activity, "send_invite.png");
+    	invites_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(menuTextureAtlas, activity, "my_invites.png");
     	       
     	try 
     	{
