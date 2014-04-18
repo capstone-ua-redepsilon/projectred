@@ -1,7 +1,6 @@
 package com.uacapstone.red;
 
 import java.io.IOException;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -11,7 +10,6 @@ import java.util.Map;
 import org.andengine.engine.Engine;
 import org.andengine.engine.LimitedFPSEngine;
 import org.andengine.engine.camera.BoundCamera;
-import org.andengine.engine.camera.Camera;
 import org.andengine.engine.handler.timer.ITimerCallback;
 import org.andengine.engine.handler.timer.TimerHandler;
 import org.andengine.engine.options.EngineOptions;
@@ -19,19 +17,6 @@ import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.WakeLockOptions;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
 import org.andengine.entity.scene.Scene;
-import org.andengine.extension.multiplayer.adt.message.server.IServerMessage;
-import org.andengine.extension.multiplayer.client.IServerMessageHandler;
-import org.andengine.extension.multiplayer.client.connector.ServerConnector;
-import org.andengine.extension.multiplayer.client.connector.SocketConnectionServerConnector;
-import org.andengine.extension.multiplayer.client.connector.SocketConnectionServerConnector.ISocketConnectionServerConnectorListener;
-import org.andengine.extension.multiplayer.server.SocketServer;
-import org.andengine.extension.multiplayer.server.SocketServer.ISocketServerListener;
-import org.andengine.extension.multiplayer.server.connector.ClientConnector;
-import org.andengine.extension.multiplayer.server.connector.SocketConnectionClientConnector;
-import org.andengine.extension.multiplayer.server.connector.SocketConnectionClientConnector.ISocketConnectionClientConnectorListener;
-import org.andengine.extension.multiplayer.shared.SocketConnection;
-import org.andengine.util.debug.Debug;
-//import org.andengine.ui.activity.BaseGameActivity;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -39,7 +24,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.View;
 
 import com.google.android.gms.games.Games;
 import com.google.android.gms.games.GamesActivityResultCodes;
@@ -54,11 +38,7 @@ import com.google.android.gms.games.multiplayer.realtime.RoomUpdateListener;
 import com.google.example.games.basegameutils.GoogleBaseGameActivity;
 import com.uacapstone.red.manager.ResourcesManager;
 import com.uacapstone.red.manager.SceneManager;
-import com.uacapstone.red.networking.ConnectionCloseServerMessage;
-import com.uacapstone.red.networking.NetworkingConstants;
-import com.uacapstone.red.networking.NetworkingConstants.ServerMessageFlags;
-import com.uacapstone.red.networking.messaging.AddFaceServerMessage;
-import com.uacapstone.red.networking.messaging.MoveFaceServerMessage;
+//import org.andengine.ui.activity.BaseGameActivity;
 
 /**
  * @author Mateusz Mysliwiec
@@ -135,7 +115,6 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
     @Override
     protected void onDestroy()
     {
-    	this.multiplayerDestroyServer();
     	super.onDestroy();
         System.exit(0);	
     }
@@ -517,158 +496,4 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
                 break;
         }
     }
-	
-	//=================================================
-	// AndEngine Multiplayer Extension Things
-	//=================================================
-	
-	SocketServer<SocketConnectionClientConnector> mSocketServer;
-	ServerConnector<SocketConnection> mServerConnector;
-	String mServerIP;
-	boolean isServer;
-	
-	//-------------------------------------------------
-	
-	private void multiplayerDestroyServer() {
-		if(this.mSocketServer != null) {
-            try {
-                this.mSocketServer.sendBroadcastServerMessage(0, new ConnectionCloseServerMessage());
-            } catch (final Exception e) {
-                Debug.e(e);
-            }
-            this.mSocketServer.terminate();
-        }
-
-        if(this.mServerConnector != null) {
-            this.mServerConnector.terminate();
-        }
-
-        super.onDestroy();
-	}
-	
-	//-------------------------------------------------
-	
-	// Server And Client Threads:
-	
-	// These two thread classes are used to start the client and the server.
-	// This is necessary since later versions of Android do not allow any
-	// networking activity to occur on the UI thread.
-	
-	private class MultiplayerServerThread implements Runnable {
-
-		@Override
-		public void run() {
-			
-			GameActivity.this.mSocketServer = new SocketServer<SocketConnectionClientConnector>(NetworkingConstants.SERVER_PORT, new MultiplayerClientConnectorListener(), new MultiplayerServerStateListener()) {
-	            @Override
-	            protected SocketConnectionClientConnector newClientConnector(final SocketConnection pSocketConnection) throws IOException {
-	                return new SocketConnectionClientConnector(pSocketConnection);
-	            }
-	        };
-	        
-	        GameActivity.this.mSocketServer.start();
-	        
-		}
-    	
-    }
-	
-	private class MultiplayerClientThread implements Runnable {
-
-		@Override
-		public void run() {
-			try {
-				
-				GameActivity.this.mServerConnector = new SocketConnectionServerConnector(new SocketConnection(new Socket(GameActivity.this.mServerIP, NetworkingConstants.SERVER_PORT)), new MultiplayerServerConnectorListener());
-				ServerConnector<SocketConnection> conn = GameActivity.this.mServerConnector;
-				// Finish client when disconnected from server
-				conn.registerServerMessage(ServerMessageFlags.CONNECTION_CLOSE, ConnectionCloseServerMessage.class, new IServerMessageHandler<SocketConnection>() {
-	                @Override
-	                public void onHandleMessage(final ServerConnector<SocketConnection> pServerConnector, final IServerMessage pServerMessage) throws IOException {
-	                	
-	                	GameActivity.this.finish();
-	                	
-	                }
-	            });
-
-				// Add face to the client when receiving ADD_FACE message from the server
-				conn.registerServerMessage(ServerMessageFlags.ADD_FACE, AddFaceServerMessage.class, new IServerMessageHandler<SocketConnection>() {
-	                @Override
-	                public void onHandleMessage(final ServerConnector<SocketConnection> pServerConnector, final IServerMessage pServerMessage) throws IOException {
-	                    
-	                	// if this activity had a addFace method, this is where it would be called using
-	                	// the parameters retrieved from the message
-	                	
-//	                	final AddFaceServerMessage addFaceServerMessage = (AddFaceServerMessage)pServerMessage;
-//	                    GameActivity.this.addFace(addFaceServerMessage.mID, addFaceServerMessage.mX, addFaceServerMessage.mY);
-	                    
-	                }
-	            });
-
-				// Move face on the client when receiving MOVE_FACE message from the server
-				conn.registerServerMessage(ServerMessageFlags.MOVE_FACE, MoveFaceServerMessage.class, new IServerMessageHandler<SocketConnection>() {
-	                @Override
-	                public void onHandleMessage(final ServerConnector<SocketConnection> pServerConnector, final IServerMessage pServerMessage) throws IOException {
-	                    
-//	                	final MoveFaceServerMessage moveFaceServerMessage = (MoveFaceServerMessage)pServerMessage;
-//	                    GameActivity.this.moveFace(moveFaceServerMessage.mID, moveFaceServerMessage.mX, moveFaceServerMessage.mY);
-	                    
-	                }
-	            });
-
-				// Start listening for messages
-				conn.getConnection().start();
-	        } catch (final Throwable t) {
-	            Debug.e(t);
-	        }
-		}
-    	
-    }
-	
-	//-------------------------------------------------
-	// Server and Client Listeners
-	
-	// These classes handle generic, non-message networking events, including connection and disconnection
-	private class MultiplayerServerConnectorListener implements ISocketConnectionServerConnectorListener {
-        @Override
-        public void onStarted(final ServerConnector<SocketConnection> pConnector) {
-        	Log.d(TAG, "CLIENT: Connected to server.");
-        }
-
-        @Override
-        public void onTerminated(final ServerConnector<SocketConnection> pConnector) {
-        	Log.d(TAG, "CLIENT: Disconnected from server...");
-            GameActivity.this.finish();
-        }
-    }
-	
-	private class MultiplayerServerStateListener implements ISocketServerListener<SocketConnectionClientConnector> {
-        @Override
-        public void onStarted(final SocketServer<SocketConnectionClientConnector> pSocketServer) {
-        	Log.d(TAG, "SERVER: Started.");
-        }
-
-        @Override
-        public void onTerminated(final SocketServer<SocketConnectionClientConnector> pSocketServer) {
-        	Log.d(TAG, "SERVER: Terminated.");
-        }
-
-        @Override
-        public void onException(final SocketServer<SocketConnectionClientConnector> pSocketServer, final Throwable pThrowable) {
-            Debug.e(pThrowable);
-            Log.d(TAG, "SERVER: Exception: " + pThrowable);
-        }
-    }
-	
-	private class MultiplayerClientConnectorListener implements ISocketConnectionClientConnectorListener {
-        @Override
-        public void onStarted(final ClientConnector<SocketConnection> pConnector) {
-        	Log.d(TAG, "SERVER: Client connected: " + pConnector.getConnection().getSocket().getInetAddress().getHostAddress());
-        }
-
-        @Override
-        public void onTerminated(final ClientConnector<SocketConnection> pConnector) {
-        	Log.d(TAG, "SERVER: Client disconnected: " + pConnector.getConnection().getSocket().getInetAddress().getHostAddress());
-        }
-    }
-
 }

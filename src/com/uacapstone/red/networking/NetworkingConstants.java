@@ -1,23 +1,19 @@
 package com.uacapstone.red.networking;
 
+import org.msgpack.MessagePack;
+
+
 public class NetworkingConstants
 {	
-	public static final String LOCALHOST_IP = "127.0.0.1";
-	public static final int SERVER_PORT = 4444;
+//	public static final String LOCALHOST_IP = "127.0.0.1";
+//	public static final int SERVER_PORT = 4444;
 	
-	public class ClientMessageFlags {
-		public static final short CONNECTION_CLOSE = 0;
-		public static final short CONNECTION_ESTABLISH = 1;
-		public static final short CONNECTION_PING = 2;
-	}
+	public static final MessagePack messagePackInstance = new MessagePack();
 	
-	public class ServerMessageFlags {
-		public static final short CONNECTION_CLOSE = 0;
-		public static final short CONNECTION_ESTABLISHED = 1;
-		public static final short CONNECTION_REJECTED_PROTOCOL_MISSMATCH = 2;
-		public static final short CONNECTION_PONG = 3;
+	public class MessageFlags {
+		public static final short MESSAGE_FROM_CLIENT_PLAYER_DIRECTION = 0;
+		public static final short MESSAGE_FROM_CLIENT_PLAYER_JUMP = 1;
 		
-		public static final short ADD_FACE = 4;
-		public static final short MOVE_FACE = 5;
+		public static final short MESSAGE_FROM_SERVER_PLAYER_STATE = 2;
 	}
 }
