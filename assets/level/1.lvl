@@ -17,6 +17,8 @@
     <entity x="665" y="150" type="platform2"/>
     <entity x="665" y="250" type="platform2"/>
     <entity x="665" y="350" type="platform2"/>
+    <entity x="100" y="30" type="player" />
+    <entity x="150" y="30" type="player" />
     <entity x="200" y="30" type="player" />
     <entity x="250" y="30" type="player" />
 </level>

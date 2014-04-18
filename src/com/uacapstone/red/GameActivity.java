@@ -338,10 +338,18 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
 
 
 	
-	private int normalizedId = -1;
+	private int normalizedId = 0;
 	public int getNormalizedId()
 	{
 		return normalizedId;
+	}
+	public int getNumPlayers()
+	{
+		if (mParticipants != null)
+		{
+			return mParticipants.size();
+		}
+		return 1;
 	}
 	
 	@Override
@@ -458,11 +466,14 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
     
     public void sendMessage(byte[] message)
     {
-        for (Participant p : mParticipants) {
-            if (p.getParticipantId().equals(mMyId))
-                continue;
-        	Games.RealTimeMultiplayer.sendUnreliableMessage(getApiClient(), message, mRoomId, p.getParticipantId());
-        }
+    	if (mMultiplayer)
+    	{
+	        for (Participant p : mParticipants) {
+	            if (p.getParticipantId().equals(mMyId))
+	                continue;
+	        	Games.RealTimeMultiplayer.sendUnreliableMessage(getApiClient(), message, mRoomId, p.getParticipantId());
+	        }
+    	}
     }
     
     // Broadcast my score to everybody else.
