@@ -53,6 +53,8 @@ public class MainMenuScene extends BaseScene implements IOnMenuItemClickListener
 	private MenuScene menuChildScene;
 	private final int MENU_SOLO = 0;
 	private final int MENU_QUICK = 1;
+	private final int MENU_FRIENDS = 2;
+	private final int MENU_INVITES = 3;
 
 	private void createMenuChildScene()
 	{
@@ -63,16 +65,28 @@ public class MainMenuScene extends BaseScene implements IOnMenuItemClickListener
 	    
 	    final IMenuItem quickMenuItem = new ScaleMenuItemDecorator(new SpriteMenuItem(MENU_QUICK, resourcesManager.quick_region, vbom), .75f, .7f);
 	    
+	    final IMenuItem inviteFriendsMenuItem = new ScaleMenuItemDecorator(new SpriteMenuItem(MENU_FRIENDS, resourcesManager.friends_region, vbom), .75f, .7f);
+	    
+	    final IMenuItem invitesMenuItem = new ScaleMenuItemDecorator(new SpriteMenuItem(MENU_INVITES, resourcesManager.invites_region, vbom), .75f, .7f);
+	    
 	    menuChildScene.addMenuItem(soloMenuItem);
 	    
 	    menuChildScene.addMenuItem(quickMenuItem);
 	    
+	    menuChildScene.addMenuItem(inviteFriendsMenuItem);
+	    
+	    menuChildScene.addMenuItem(invitesMenuItem);
+	    
 	    menuChildScene.buildAnimations();
 	    menuChildScene.setBackgroundEnabled(false);
 	    
-	    soloMenuItem.setPosition(soloMenuItem.getX(), soloMenuItem.getY() - 10);
+	    soloMenuItem.setPosition(soloMenuItem.getX(), soloMenuItem.getY() + 10);
 	    
-	    quickMenuItem.setPosition(quickMenuItem.getX(), quickMenuItem.getY() - 20);
+	    quickMenuItem.setPosition(quickMenuItem.getX(), quickMenuItem.getY() + 0);
+	    
+	    inviteFriendsMenuItem.setPosition(inviteFriendsMenuItem.getX(), inviteFriendsMenuItem.getY() - 10);
+	    
+	    invitesMenuItem.setPosition(invitesMenuItem.getX(), invitesMenuItem.getY() - 20);
 	    
 	    menuChildScene.setOnMenuItemClickListener(this);
 	    
@@ -91,6 +105,14 @@ public class MainMenuScene extends BaseScene implements IOnMenuItemClickListener
         case MENU_QUICK:
             //Load Game Scene!
             activity.StartQuickGame();
+            return true;
+        case MENU_FRIENDS:
+            //Load Game Scene!
+            activity.InviteFriends();
+            return true;
+        case MENU_INVITES:
+            //Load Game Scene!
+            activity.SeeInvitations();
             return true;
         default:
             return false;
