@@ -40,10 +40,14 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.WindowManager;
 
 import com.google.android.gms.games.Games;
 import com.google.android.gms.games.GamesActivityResultCodes;
 import com.google.android.gms.games.GamesStatusCodes;
+import com.google.android.gms.games.multiplayer.Invitation;
+import com.google.android.gms.games.multiplayer.Multiplayer;
+import com.google.android.gms.games.multiplayer.OnInvitationReceivedListener;
 import com.google.android.gms.games.multiplayer.Participant;
 import com.google.android.gms.games.multiplayer.realtime.RealTimeMessage;
 import com.google.android.gms.games.multiplayer.realtime.RealTimeMessageReceivedListener;
@@ -65,10 +69,14 @@ import com.uacapstone.red.networking.messaging.MoveFaceServerMessage;
  * @author www.matim-dev.com
  * @version 1.0
  */
-public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateListener, RealTimeMessageReceivedListener, RoomStatusUpdateListener
+public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateListener, RealTimeMessageReceivedListener, RoomStatusUpdateListener, OnInvitationReceivedListener
 {
 	final static String TAG = "ButtonClicker2000";
-	final static int RC_WAITING_ROOM = 10002;
+	// Request codes for the UIs that we show with startActivityForResult:
+    final static int RC_SELECT_PLAYERS = 10000;
+    final static int RC_INVITATION_INBOX = 10001;
+    final static int RC_WAITING_ROOM = 10002;
+
 	
 	// Room ID where the currently active game is taking place; null if we're
     // not playing.
@@ -82,6 +90,10 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
 
     // My participant ID in the currently active game
     String mMyId = null;
+    
+    // If non-null, this is the id of the invitation we received via the
+    // invitation listener
+    String mIncomingInvitationId = null;
 
     // Message buffer for sending messages
     byte[] mMsgBuf = new byte[8];
@@ -176,15 +188,13 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
         // register listener so we are notified if we receive an invitation to play
         // while we are in the game
         
-        //Uncomment later
-        //Games.Invitations.registerInvitationListener(getApiClient(), this);
+        Games.Invitations.registerInvitationListener(getApiClient(), this);
 
         // if we received an invite via notification, accept it; otherwise, go to main screen
-        //also uncomment later
-        /*if (getInvitationId() != null) {
+        if (getInvitationId() != null) {
             acceptInviteToRoom(getInvitationId());
             return;
-        }*/
+        }
         switchToMainScreen();
     }
     
@@ -210,6 +220,7 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
         findViewById(R.id.invitation_popup).setVisibility(showInvPopup ? View.VISIBLE : View.GONE);*/
     }
     
+    //Menu buttons
     public void StartQuickGame() {
         // quick-start a game with 1 randomly selected opponent
         final int MIN_OPPONENTS = 1, MAX_OPPONENTS = 1;
@@ -225,6 +236,22 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
         Games.RealTimeMultiplayer.create(getApiClient(), rtmConfigBuilder.build());
     }
     
+    public void InviteFriends()
+    {
+    	Intent intent = Games.RealTimeMultiplayer.getSelectOpponentsIntent(getApiClient(), 1, 3);
+        //switchToScreen(R.id.screen_wait);
+        startActivityForResult(intent, RC_SELECT_PLAYERS);
+    }
+    
+    public void SeeInvitations()
+    {
+    	Intent intent = Games.Invitations.getInvitationInboxIntent(getApiClient());
+        //switchToScreen(R.id.screen_wait);
+        startActivityForResult(intent, RC_INVITATION_INBOX);
+    }
+    
+    
+    
     void switchToMainScreen() {
         //switchToScreen(isSignedIn() ? R.id.screen_main : R.id.screen_sign_in);
     }
@@ -234,8 +261,16 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
     }
 
 	@Override
-	public void onJoinedRoom(int arg0, Room arg1) {
-		// TODO Auto-generated method stub
+	public void onJoinedRoom(int statusCode, Room room) {
+		Log.d(TAG, "onJoinedRoom(" + statusCode + ", " + room + ")");
+        if (statusCode != GamesStatusCodes.STATUS_OK) {
+            Log.e(TAG, "*** Error: onRoomConnected, status " + statusCode);
+            //showGameError();
+            return;
+        }
+
+        // show the waiting room UI
+        showWaitingRoom(room);
 		
 	}
 
@@ -490,7 +525,7 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
         super.onActivityResult(requestCode, responseCode, intent);
 
         switch (requestCode) {
-            /*case RC_SELECT_PLAYERS:
+            case RC_SELECT_PLAYERS:
                 // we got the result from the "select players" UI -- ready to create the room
                 handleSelectPlayersResult(responseCode, intent);
                 break;
@@ -498,7 +533,7 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
                 // we got the result from the "select invitation" UI (invitation inbox). We're
                 // ready to accept the selected invitation:
                 handleInvitationInboxResult(responseCode, intent);
-                break;*/
+                break;
             case RC_WAITING_ROOM:
                 // we got the result from the "waiting room" UI.
                 if (responseCode == Activity.RESULT_OK) {
@@ -516,6 +551,86 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
                 }
                 break;
         }
+    }
+	
+	// Handle the result of the "Select players UI" we launched when the user clicked the
+    // "Invite friends" button. We react by creating a room with those players.
+    private void handleSelectPlayersResult(int response, Intent data) {
+        if (response != Activity.RESULT_OK) {
+            Log.w(TAG, "*** select players UI cancelled, " + response);
+            switchToMainScreen();
+            return;
+        }
+
+        Log.d(TAG, "Select players UI succeeded.");
+
+        // get the invitee list
+        final ArrayList<String> invitees = data.getStringArrayListExtra(Games.EXTRA_PLAYER_IDS);
+        Log.d(TAG, "Invitee count: " + invitees.size());
+
+        // get the automatch criteria
+        Bundle autoMatchCriteria = null;
+        int minAutoMatchPlayers = data.getIntExtra(Multiplayer.EXTRA_MIN_AUTOMATCH_PLAYERS, 0);
+        int maxAutoMatchPlayers = data.getIntExtra(Multiplayer.EXTRA_MAX_AUTOMATCH_PLAYERS, 0);
+        if (minAutoMatchPlayers > 0 || maxAutoMatchPlayers > 0) {
+            autoMatchCriteria = RoomConfig.createAutoMatchCriteria(
+                    minAutoMatchPlayers, maxAutoMatchPlayers, 0);
+            Log.d(TAG, "Automatch criteria: " + autoMatchCriteria);
+        }
+
+        // create the room
+        Log.d(TAG, "Creating room...");
+        RoomConfig.Builder rtmConfigBuilder = RoomConfig.builder(this);
+        rtmConfigBuilder.addPlayersToInvite(invitees);
+        rtmConfigBuilder.setMessageReceivedListener(this);
+        rtmConfigBuilder.setRoomStatusUpdateListener(this);
+        if (autoMatchCriteria != null) {
+            rtmConfigBuilder.setAutoMatchCriteria(autoMatchCriteria);
+        }
+        //switchToScreen(R.id.screen_wait);
+        keepScreenOn();
+        //resetGameVars();
+        Games.RealTimeMultiplayer.create(getApiClient(), rtmConfigBuilder.build());
+        Log.d(TAG, "Room created, waiting for it to be ready...");
+    }
+    
+    // Handle the result of the invitation inbox UI, where the player can pick an invitation
+    // to accept. We react by accepting the selected invitation, if any.
+    private void handleInvitationInboxResult(int response, Intent data) {
+        if (response != Activity.RESULT_OK) {
+            Log.w(TAG, "*** invitation inbox UI cancelled, " + response);
+            switchToMainScreen();
+            return;
+        }
+
+        Log.d(TAG, "Invitation inbox UI succeeded.");
+        Invitation inv = data.getExtras().getParcelable(Multiplayer.EXTRA_INVITATION);
+
+        // accept invitation
+        acceptInviteToRoom(inv.getInvitationId());
+    }
+	
+	// Accept the given invitation.
+    void acceptInviteToRoom(String invId) {
+        // accept the invitation
+        Log.d(TAG, "Accepting invitation: " + invId);
+        RoomConfig.Builder roomConfigBuilder = RoomConfig.builder(this);
+        roomConfigBuilder.setInvitationIdToAccept(invId)
+                .setMessageReceivedListener(this)
+                .setRoomStatusUpdateListener(this);
+        //switchToScreen(R.id.screen_wait);
+        keepScreenOn();
+        //resetGameVars();
+        Games.RealTimeMultiplayer.join(getApiClient(), roomConfigBuilder.build());
+    }
+    
+ // Sets the flag to keep this screen on. It's recommended to do that during
+    // the
+    // handshake when setting up a game, because if the screen turns off, the
+    // game will be
+    // cancelled.
+    void keepScreenOn() {
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 	
 	//=================================================
@@ -670,5 +785,17 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
         	Log.d(TAG, "SERVER: Client disconnected: " + pConnector.getConnection().getSocket().getInetAddress().getHostAddress());
         }
     }
+
+	@Override
+	public void onInvitationReceived(Invitation arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onInvitationRemoved(String arg0) {
+		// TODO Auto-generated method stub
+		
+	}
 
 }
