@@ -44,6 +44,7 @@ public abstract class Player extends AnimatedSprite
     private int runDirection = 0;
     private float speed = 5;
     private int footContacts = 0;
+    private Vector2 startPosition;
 
     // ---------------------------------------------
     // LOGIC
@@ -61,6 +62,15 @@ public abstract class Player extends AnimatedSprite
         velocity = runDirection * speed;
             
     	animateRun(runDirection);
+    }
+    public Body getBody()
+    {
+    	return body;
+    }
+    
+    public Vector2 getStartPosition()
+    {
+    	return startPosition;
     }
     
     private void animateRun(float direction)
@@ -158,11 +168,12 @@ public abstract class Player extends AnimatedSprite
                 
                 if (getY() <= 0)
                 {                    
-                    onDie();
+                    body.setTransform(startPosition, body.getAngle());
                 }
             
                 body.setLinearVelocity(new Vector2(velocity, body.getLinearVelocity().y)); 
             }
         });
+        startPosition = new Vector2(body.getPosition());
     }
 }

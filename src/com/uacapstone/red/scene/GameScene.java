@@ -52,8 +52,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         createBackground();
         createHUD();
         createPhysics();
-        loadLevel(1);
-        createGameOverText();
+        loadLevel(2);
+        createCongratsText();
         setOnSceneTouchListener(this);
     }
 
@@ -232,10 +232,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                     		@Override
                     		public void onDie()
                     		{
-                    		    if (!gameOverDisplayed)
-                    		    {
-                    		        displayGameOverText();
-                    		    }
+                    		    //getBody().setTransform(getStartPosition(), getBody().getAngle());
                     		}
                     	};
                     	levelObject = p;
@@ -363,17 +360,17 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         return contactListener;
     }
     
-    private void createGameOverText()
+    private void createCongratsText()
     {
-        gameOverText = new Text(0, 0, resourcesManager.font, "Game Over!", vbom);
+    	congratsText = new Text(0, 0, resourcesManager.font, "Congratulations!", vbom);
     }
 
-    private void displayGameOverText()
+    private void displayCongratsText()
     {
         camera.setChaseEntity(null);
-        gameOverText.setPosition(camera.getCenterX(), camera.getCenterY());
-        attachChild(gameOverText);
-        gameOverDisplayed = true;
+        congratsText.setPosition(camera.getCenterX(), camera.getCenterY());
+        attachChild(congratsText);
+        congratsDisplayed = true;
     }
     
     private HUD gameHUD;
@@ -390,8 +387,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     private static int DRAG_DISTANCE = 50;
     private static double MOVE_TOUCH_PERCENTAGE = .2;
     private boolean hasJumped = false;
-    private Text gameOverText;
-    private boolean gameOverDisplayed = false;
+    private Text congratsText;
+    private boolean congratsDisplayed = false;
 	private Body hiddenPlatformBody = null;
 	private Sprite hiddenPlatformSprite;
 	private ArrayList<Sprite> spritesToAdd = new ArrayList<Sprite>();
