@@ -158,8 +158,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
             {
                 final int width = SAXUtils.getIntAttributeOrThrow(pAttributes, LevelConstants.TAG_LEVEL_ATTRIBUTE_WIDTH);
                 final int height = SAXUtils.getIntAttributeOrThrow(pAttributes, LevelConstants.TAG_LEVEL_ATTRIBUTE_HEIGHT);
-                final int nPlayers = SAXUtils.getIntAttributeOrThrow(pAttributes, "numPlayers");
-                players = new Player[nPlayers];
+                minPlayers = SAXUtils.getIntAttributeOrThrow(pAttributes, "numPlayers");
+                numPlayers = activity.getNumPlayers();
+                players = new Player[numPlayers];
                 mId = activity.getNormalizedId();
                 
                 camera.setBounds(0, 0, width, height); // here we set camera bounds
@@ -171,18 +172,24 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         
         levelLoader.registerEntityLoader(new EntityLoader<SimpleLevelEntityLoaderData>(TAG_ENTITY)
         {
+        	int playerIndex = 0;
             public IEntity onLoadEntity(final String pEntityName, final IEntity pParent, final Attributes pAttributes, final SimpleLevelEntityLoaderData pSimpleLevelEntityLoaderData) throws IOException
             {
                 final int x = SAXUtils.getIntAttributeOrThrow(pAttributes, TAG_ENTITY_ATTRIBUTE_X);
                 final int y = SAXUtils.getIntAttributeOrThrow(pAttributes, TAG_ENTITY_ATTRIBUTE_Y);
                 final String type = SAXUtils.getAttributeOrThrow(pAttributes, TAG_ENTITY_ATTRIBUTE_TYPE);
                 
-                final Sprite levelObject;
+                Sprite levelObject = null;
                 
                 if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLATFORM1))
                 {
                     levelObject = new Sprite(x, y, resourcesManager.platform1_region, vbom);
                     PhysicsFactory.createBoxBody(physicsWorld, levelObject, BodyType.StaticBody, FIXTURE_DEF).setUserData("platform1");
+                } 
+                else if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_BLOCK))
+                {
+                    levelObject = new Sprite(x, y, resourcesManager.block_region, vbom);
+                    PhysicsFactory.createBoxBody(physicsWorld, levelObject, BodyType.StaticBody, FIXTURE_DEF).setUserData("block");
                 } 
                 else if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLATFORM2))
                 {
@@ -223,32 +230,39 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 }     
                 else if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLAYER))
                 {
-                	Player p = new Player(x, y, vbom, camera, physicsWorld, numPlayers)
+                	if (playerIndex < numPlayers)
                 	{
-                		@Override
-                		public void onDie()
-                		{
-                		    if (!gameOverDisplayed)
-                		    {
-                		        displayGameOverText();
-                		    }
-                		}
-                	};
-                	levelObject = p;
-                	players[numPlayers++] = p;
+                    	Player p = new Player(x, y, vbom, camera, physicsWorld, playerIndex)
+                    	{
+                    		@Override
+                    		public void onDie()
+                    		{
+                    		    if (!gameOverDisplayed)
+                    		    {
+                    		        displayGameOverText();
+                    		    }
+                    		}
+                    	};
+                    	levelObject = p;
+                    	players[playerIndex++] = p;	
+                	}
                 }
                 else
                 {
                     throw new IllegalArgumentException();
                 }
 
-                levelObject.setCullingEnabled(true);
-
+                if (levelObject != null)
+                {
+	                levelObject.setCullingEnabled(true);
+	
+                }
                 return levelObject;
             }
         });
 
         levelLoader.loadLevelFromAsset(activity.getAssets(), "level/" + levelID + ".lvl");
+
         player = players[mId];
         camera.setChaseEntity(player);
     }
@@ -371,10 +385,12 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     private Text scoreText;
     private int score = 0;
     private PhysicsWorld physicsWorld;
-    private Player[] players;
     private Player player;
     private int mId;
-	private int numPlayers = 0;
+    private static final int MaxPlayers = 4;
+    private Player[] players;
+	private int numPlayers;
+	private int minPlayers = 0;
     private Vector2 lastTouchCoords;
     private static int DRAG_DISTANCE = 50;
     private static double MOVE_TOUCH_PERCENTAGE = .2;
@@ -393,6 +409,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     private static final String TAG_ENTITY_ATTRIBUTE_TYPE = "type";
         
     private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLATFORM1 = "platform1";
+    private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_BLOCK = "block";
     private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLATFORM2 = "platform2";
     private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_SWITCH = "switch";
     private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_FLAG = "flag";
