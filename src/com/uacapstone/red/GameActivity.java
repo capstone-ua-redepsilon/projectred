@@ -198,6 +198,11 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
         switchToMainScreen();
     }
     
+    public void SignOut() {
+    	signOut();
+    }
+    
+    //TODO: remove if not needed
     void switchToScreen(int screenId) {
         // make the requested screen visible; hide all others.
         /*for (int id : SCREENS) {
@@ -251,15 +256,34 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
     }
     
     
-    
+    //TODO: remove if not needed
     void switchToMainScreen() {
         //switchToScreen(isSignedIn() ? R.id.screen_main : R.id.screen_sign_in);
     }
-    
-    public void SignOut() {
-    	signOut();
-    }
 
+    /*
+     * CALLBACKS SECTION. This section shows how we implement the several games
+     * API callbacks.
+     */
+    
+	@Override
+	public void onConnectedToRoom(Room room) {
+		Log.d(TAG, "onConnectedToRoom.");
+
+        // get room ID, participants and my ID:
+        mRoomId = room.getRoomId();
+        mParticipants = room.getParticipants();
+        mMyId = room.getParticipantId(Games.Players.getCurrentPlayerId(getApiClient()));
+        ArrayList<String> ids = new ArrayList<String>(room.getParticipantIds());
+        Collections.sort(ids);
+        normalizedId = ids.indexOf(mMyId);
+
+        // print out the list of participants (for debug purposes)
+        Log.d(TAG, "Room ID: " + mRoomId);
+        Log.d(TAG, "My ID " + mMyId);
+        Log.d(TAG, "<< CONNECTED TO ROOM>>");
+	}
+	
 	@Override
 	public void onJoinedRoom(int statusCode, Room room) {
 		Log.d(TAG, "onJoinedRoom(" + statusCode + ", " + room + ")");
@@ -273,13 +297,7 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
         showWaitingRoom(room);
 		
 	}
-
-	@Override
-	public void onLeftRoom(int arg0, String arg1) {
-		// TODO Auto-generated method stub
-		
-	}
-
+	
 	@Override
 	public void onRoomConnected(int statusCode, Room room) {
 		Log.d(TAG, "onRoomConnected(" + statusCode + ", " + room + ")");
@@ -290,7 +308,7 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
         }
 		updateRoom(room);
 	}
-
+	
 	@Override
 	public void onRoomCreated(int statusCode, Room room) {
 		Log.d(TAG, "onRoomCreated(" + statusCode + ", " + room + ")");
@@ -318,34 +336,22 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
         startActivityForResult(i, RC_WAITING_ROOM);
     }
 
-	@Override
-	public void onConnectedToRoom(Room room) {
-		Log.d(TAG, "onConnectedToRoom.");
 
-        // get room ID, participants and my ID:
-        mRoomId = room.getRoomId();
-        mParticipants = room.getParticipants();
-        mMyId = room.getParticipantId(Games.Players.getCurrentPlayerId(getApiClient()));
-        ArrayList<String> ids = new ArrayList<String>(room.getParticipantIds());
-        Collections.sort(ids);
-        normalizedId = ids.indexOf(mMyId);
-
-        // print out the list of participants (for debug purposes)
-        Log.d(TAG, "Room ID: " + mRoomId);
-        Log.d(TAG, "My ID " + mMyId);
-        Log.d(TAG, "<< CONNECTED TO ROOM>>");
-	}
 	
 	private int normalizedId = -1;
 	public int getNormalizedId()
 	{
 		return normalizedId;
 	}
+	
+	@Override
+	public void onLeftRoom(int arg0, String arg1) {
+		// TODO Auto-generated method stub
+	}
 
 	@Override
 	public void onDisconnectedFromRoom(Room arg0) {
-		// TODO Auto-generated method stub
-		
+		// TODO Auto-generated method stub	
 	}
 
 	@Override
@@ -361,51 +367,43 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
 	}
 
 	@Override
-	public void onPeerDeclined(Room arg0, List<String> arg1) {
-		// TODO Auto-generated method stub
-		
+	public void onPeerDeclined(Room room, List<String> arg1) {
+		updateRoom(room);
 	}
 
 	@Override
-	public void onPeerInvitedToRoom(Room arg0, List<String> arg1) {
-		// TODO Auto-generated method stub
-		
+	public void onPeerInvitedToRoom(Room room, List<String> arg1) {
+		updateRoom(room);
 	}
 
 	@Override
-	public void onPeerJoined(Room arg0, List<String> arg1) {
-		// TODO Auto-generated method stub
-		
+	public void onPeerJoined(Room room, List<String> arg1) {
+		updateRoom(room);
 	}
 
 	@Override
-	public void onPeerLeft(Room arg0, List<String> arg1) {
-		// TODO Auto-generated method stub
-		
+	public void onPeerLeft(Room room, List<String> arg1) {
+		updateRoom(room);
 	}
 
 	@Override
-	public void onPeersConnected(Room arg0, List<String> arg1) {
-		// TODO Auto-generated method stub
-		
+	public void onPeersConnected(Room room, List<String> arg1) {
+		updateRoom(room);
 	}
 
 	@Override
-	public void onPeersDisconnected(Room arg0, List<String> arg1) {
-		// TODO Auto-generated method stub
-		
+	public void onPeersDisconnected(Room room, List<String> arg1) {
+		updateRoom(room);
 	}
 
 	@Override
-	public void onRoomAutoMatching(Room arg0) {
-		// TODO Auto-generated method stub
-		
+	public void onRoomAutoMatching(Room room) {
+		updateRoom(room);
 	}
 
 	@Override
-	public void onRoomConnecting(Room arg0) {
-		// TODO Auto-generated method stub
-		
+	public void onRoomConnecting(Room room) {
+		updateRoom(room);
 	}
 	
 	void updateRoom(Room room) {
@@ -624,13 +622,47 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
         Games.RealTimeMultiplayer.join(getApiClient(), roomConfigBuilder.build());
     }
     
- // Sets the flag to keep this screen on. It's recommended to do that during
+    // Activity is going to the background. We have to leave the current room.
+    @Override
+    public void onStop() {
+        Log.d(TAG, "**** got onStop");
+
+        // if we're in a room, leave it.
+        leaveRoom();
+
+        // stop trying to keep the screen on
+        stopKeepingScreenOn();
+
+        //switchToScreen(R.id.screen_wait);
+        super.onStop();
+    }
+    
+    // Leave the room.
+    void leaveRoom() {
+        Log.d(TAG, "Leaving room.");
+        //mSecondsLeft = 0;
+        stopKeepingScreenOn();
+        if (mRoomId != null) {
+            Games.RealTimeMultiplayer.leave(getApiClient(), this, mRoomId);
+            mRoomId = null;
+            //switchToScreen(R.id.screen_wait);
+        } else {
+            switchToMainScreen();
+        }
+    }
+    
+    // Sets the flag to keep this screen on. It's recommended to do that during
     // the
     // handshake when setting up a game, because if the screen turns off, the
     // game will be
     // cancelled.
     void keepScreenOn() {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
+    
+    // Clears the flag that keeps the screen on.
+    void stopKeepingScreenOn() {
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 	
 	//=================================================
