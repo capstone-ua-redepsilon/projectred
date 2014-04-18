@@ -4,5 +4,11 @@
     <entity x="132" y="16" type="block"/>  
     <entity x="164" y="16" type="block"/>  
     <entity x="196" y="16" type="block"/>
-    <entity x="132" y="48" type="player" />
+    <entity x="228" y="16" type="block"/>
+    <entity x="260" y="16" type="block"/>
+    <entity x="292" y="16" type="block"/>
+    <entity x="100" y="48" type="player" />
+    <entity x="164" y="48" type="player" />
+    <entity x="228" y="48" type="player" />
+    <entity x="292" y="48" type="player" />
 </level>

@@ -9,7 +9,6 @@ import com.uacapstone.red.base.BaseScene;
 import com.uacapstone.red.scene.GameScene;
 import com.uacapstone.red.scene.LoadingScene;
 import com.uacapstone.red.scene.MainMenuScene;
-import com.uacapstone.red.scene.SoloGameScene;
 import com.uacapstone.red.scene.SplashScene;
 
 /**
@@ -26,7 +25,6 @@ public class SceneManager
     private BaseScene splashScene;
     private BaseScene menuScene;
     private GameScene gameScene;
-    private SoloGameScene soloGameScene;
     private BaseScene loadingScene;
     
     //---------------------------------------------
@@ -46,7 +44,6 @@ public class SceneManager
         SCENE_SPLASH,
         SCENE_MENU,
         SCENE_GAME,
-        SCENE_SOLOGAME,
         SCENE_LOADING,
     }
     
@@ -76,9 +73,6 @@ public class SceneManager
             case SCENE_GAME:
                 setScene(gameScene);
                 break;
-            case SCENE_SOLOGAME:
-            	setScene(soloGameScene);
-            	break;
             case SCENE_SPLASH:
                 setScene(splashScene);
                 break;
@@ -145,22 +139,6 @@ public class SceneManager
                 ResourcesManager.getInstance().loadGameResources();
                 gameScene = new GameScene();
                 setScene(gameScene);
-            }
-        }));
-    }
-    
-    public void loadSoloGameScene(final Engine mEngine)
-    {
-        setScene(loadingScene);
-        ResourcesManager.getInstance().unloadMenuTextures();
-        mEngine.registerUpdateHandler(new TimerHandler(0.1f, new ITimerCallback() 
-        {
-            public void onTimePassed(final TimerHandler pTimerHandler) 
-            {
-                mEngine.unregisterUpdateHandler(pTimerHandler);
-                ResourcesManager.getInstance().loadGameResources();
-                soloGameScene = new SoloGameScene();
-                setScene(soloGameScene);
             }
         }));
     }
