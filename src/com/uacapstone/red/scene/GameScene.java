@@ -41,6 +41,11 @@ import com.badlogic.gdx.physics.box2d.Manifold;
 import com.uacapstone.red.base.BaseScene;
 import com.uacapstone.red.manager.SceneManager;
 import com.uacapstone.red.manager.SceneManager.SceneType;
+import com.uacapstone.red.networking.FlaggedNetworkMessage;
+import com.uacapstone.red.networking.NetworkMessage;
+import com.uacapstone.red.networking.NetworkingConstants;
+import com.uacapstone.red.networking.NetworkingConstants.MessageFlags;
+import com.uacapstone.red.networking.PlayerChangeDirectionMessage;
 import com.uacapstone.red.object.Player;
 import com.uacapstone.red.object.PlayerData;
 
@@ -426,62 +431,88 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 				xdir = 1;
 			}
 			player.setRunDirection(xdir);
-			byte[] message = new byte[8];
-			message[0] = (byte)mId;
-			message[1] = (byte)0;
-			message[2] = (byte)xdir;
-			activity.sendMessage(message);
+			
+			PlayerChangeDirectionMessage message = new PlayerChangeDirectionMessage(mId, xdir);
+			FlaggedNetworkMessage flaggedMessage = new FlaggedNetworkMessage(message.getFlag(), message.getBytes());
+			
+			try {
+				activity.sendMessage(NetworkingConstants.messagePackInstance.write(flaggedMessage));
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+			
+			
+//			byte[] message = new byte[8];
+//			message[0] = (byte)mId;
+//			message[1] = (byte)0;
+//			message[2] = (byte)xdir;
+//			activity.sendMessage(message);
 		}
 		else if (pSceneTouchEvent.isActionMove())
 		{
-			float x = pSceneTouchEvent.getX() - camera.getXMin();
-			float y = pSceneTouchEvent.getY() - camera.getYMin();
-			Vector2 currentCoords = new Vector2(x, y);
-			Vector2 displacement = currentCoords.sub(lastTouchCoords);
-			if (Math.abs(displacement.y) > DRAG_DISTANCE && !hasJumped)
-			{
-				hasJumped = true;
-				player.jump();
-				byte[] message = new byte[8];
-				message[0] = (byte)mId;
-				message[1] = (byte)1;
-				activity.sendMessage(message);
-			}
+//			float x = pSceneTouchEvent.getX() - camera.getXMin();
+//			float y = pSceneTouchEvent.getY() - camera.getYMin();
+//			Vector2 currentCoords = new Vector2(x, y);
+//			Vector2 displacement = currentCoords.sub(lastTouchCoords);
+//			if (Math.abs(displacement.y) > DRAG_DISTANCE && !hasJumped)
+//			{
+//				hasJumped = true;
+//				player.jump();				
+//				byte[] message = new byte[8];
+//				message[0] = (byte)mId;
+//				message[1] = (byte)1;
+//				activity.sendMessage(message);
+//			}
 		}
 		else if (pSceneTouchEvent.isActionUp())
 		{
-			if (player.isRunning())
-			{
-				player.setRunDirection(0);
-				byte[] message = new byte[8];
-				message[0] = (byte)mId;
-				message[1] = (byte)0;
-				message[2] = (byte)0;
-				activity.sendMessage(message);
-			}
-			if (hasJumped)
-			{
-				hasJumped = false;
-			}
+//			if (player.isRunning())
+//			{
+//				player.setRunDirection(0);
+//				byte[] message = new byte[8];
+//				message[0] = (byte)mId;
+//				message[1] = (byte)0;
+//				message[2] = (byte)0;
+//				activity.sendMessage(message);
+//			}
+//			if (hasJumped)
+//			{
+//				hasJumped = false;
+//			}
 		}
 		return false;
 	}
 	
-	
+	public void handlePlayerChangeDirectionMessage(PlayerChangeDirectionMessage msg) {
+		players[msg.playerId].setRunDirection(msg.direction);
+	}
 	
 	public void handleMessage(byte[] message)
 	{
-		int i = message[0];
-		int t = message[1];
-		if (t == 0)
-		{
-			float d = (float)message[2];
-			players[i].setRunDirection(d);
-		}
-		else
-		{
-			players[i].jump();
+		try {
+			FlaggedNetworkMessage flaggedMessage = NetworkingConstants.messagePackInstance.read(message, FlaggedNetworkMessage.class);
+			
+			switch (flaggedMessage.messageFlag) {
+			case NetworkingConstants.MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_DIRECTION:
+				handlePlayerChangeDirectionMessage(NetworkingConstants.messagePackInstance.read(flaggedMessage.messageBytes, PlayerChangeDirectionMessage.class));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		
+		
+//		int i = message[0];
+//		int t = message[1];
+//		if (t == 0)
+//		{
+//			float d = (float)message[2];
+//			players[i].setRunDirection(d);
+//		}
+//		else
+//		{
+//			players[i].jump();
+//		}
+		return;
 	}
 }
