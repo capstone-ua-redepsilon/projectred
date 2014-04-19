@@ -1,6 +1,9 @@
-package com.uacapstone.red.networking;
+package com.uacapstone.red.networking.messaging;
 
 import org.msgpack.annotation.Message;
+
+import com.uacapstone.red.networking.NetworkingConstants;
+
 
 @Message
 public class PlayerChangeDirectionMessage extends NetworkMessage {
@@ -8,12 +11,6 @@ public class PlayerChangeDirectionMessage extends NetworkMessage {
 	public int direction;
 	
 	public PlayerChangeDirectionMessage() {
-		
-	}
-	
-	public PlayerChangeDirectionMessage(int playerId, int direction) {
-		this.playerId = playerId;
-		this.direction = direction;
 	}
 	
 	public short getFlag() {

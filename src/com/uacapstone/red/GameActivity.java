@@ -24,7 +24,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.View;
 import android.view.WindowManager;
 
 import com.google.android.gms.games.Games;
@@ -43,6 +42,8 @@ import com.google.android.gms.games.multiplayer.realtime.RoomUpdateListener;
 import com.google.example.games.basegameutils.GoogleBaseGameActivity;
 import com.uacapstone.red.manager.ResourcesManager;
 import com.uacapstone.red.manager.SceneManager;
+import com.uacapstone.red.networking.messaging.FlaggedNetworkMessage;
+import com.uacapstone.red.networking.messaging.SetHostMessage;
 //import org.andengine.ui.activity.BaseGameActivity;
 
 /**
@@ -71,6 +72,8 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
 
     // My participant ID in the currently active game
     String mMyId = null;
+    String mHostId = null;
+    boolean mIsHost = false;
     
     // If non-null, this is the id of the invitation we received via the
     // invitation listener
@@ -257,7 +260,7 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
         ArrayList<String> ids = new ArrayList<String>(room.getParticipantIds());
         Collections.sort(ids);
         normalizedId = ids.indexOf(mMyId);
-
+        
         // print out the list of participants (for debug purposes)
         Log.d(TAG, "Room ID: " + mRoomId);
         Log.d(TAG, "My ID " + mMyId);
@@ -394,10 +397,37 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
 		updateRoom(room);
 	}
 	
+	public void setHost(String hostId) {
+		this.mHostId = hostId;
+	}
+	
+	void updateHost() {
+		if (mParticipants != null) {
+			boolean isHostStillPlaying = false;
+			for (Participant p : mParticipants) {
+				if (p.getParticipantId() == mHostId) {
+					isHostStillPlaying = true; 
+					break;
+				}
+			}
+			
+			if (!isHostStillPlaying) {
+				mHostId = mParticipants.get(0).getParticipantId();
+				SetHostMessage msg = new SetHostMessage();
+				msg.participantId = mHostId;
+				
+				this.sendReliableMessageToOthers(new FlaggedNetworkMessage(msg).getBytes());
+			}
+		}
+	}
+	
 	void updateRoom(Room room) {
         if (room != null) {
             mParticipants = room.getParticipants();
         }
+        
+        updateHost();
+        
         /*if (mParticipants != null) {
             updatePeerScoresDisplay();
         }*/
@@ -444,7 +474,19 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
         }*/
     }
     
-    public void sendMessage(byte[] message)
+    public void sendReliableMessageToOthers(byte[] message)
+    {
+    	if (mMultiplayer)
+    	{
+	        for (Participant p : mParticipants) {
+	            if (p.getParticipantId().equals(mMyId))
+	                continue;
+	        	Games.RealTimeMultiplayer.sendReliableMessage(getApiClient(), null, message, mRoomId, p.getParticipantId());
+	        }
+    	}
+    }
+    
+    public void sendUnreliableMessageToOthers(byte[] message)
     {
     	if (mMultiplayer)
     	{

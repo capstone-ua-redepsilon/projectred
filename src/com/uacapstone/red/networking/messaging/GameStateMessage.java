@@ -1,8 +1,9 @@
-package com.uacapstone.red.networking;
+package com.uacapstone.red.networking.messaging;
 
 import org.msgpack.annotation.Message;
 
 import com.badlogic.gdx.math.Vector2;
+import com.uacapstone.red.networking.NetworkingConstants;
 
 @Message
 public class GameStateMessage extends NetworkMessage {
@@ -19,6 +20,6 @@ public class GameStateMessage extends NetworkMessage {
 	@Override
 	public short getFlag() {
 		// TODO Auto-generated method stub
-		return 0;
+		return NetworkingConstants.MessageFlags.MESSAGE_FROM_SERVER_PLAYER_STATE;
 	}
 }

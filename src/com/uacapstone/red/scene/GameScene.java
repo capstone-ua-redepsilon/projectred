@@ -41,11 +41,12 @@ import com.badlogic.gdx.physics.box2d.Manifold;
 import com.uacapstone.red.base.BaseScene;
 import com.uacapstone.red.manager.SceneManager;
 import com.uacapstone.red.manager.SceneManager.SceneType;
-import com.uacapstone.red.networking.FlaggedNetworkMessage;
-import com.uacapstone.red.networking.NetworkMessage;
 import com.uacapstone.red.networking.NetworkingConstants;
 import com.uacapstone.red.networking.NetworkingConstants.MessageFlags;
-import com.uacapstone.red.networking.PlayerChangeDirectionMessage;
+import com.uacapstone.red.networking.messaging.FlaggedNetworkMessage;
+import com.uacapstone.red.networking.messaging.PlayerChangeDirectionMessage;
+import com.uacapstone.red.networking.messaging.PlayerJumpMessage;
+import com.uacapstone.red.networking.messaging.SetHostMessage;
 import com.uacapstone.red.object.Player;
 import com.uacapstone.red.object.PlayerData;
 
@@ -414,6 +415,42 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     
     private static FixtureDef FIXTURE_DEF;
     
+    public void sendFlaggedMessage(FlaggedNetworkMessage m) {
+    	try {
+			activity.sendUnreliableMessageToOthers(m.getBytes());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+    }
+    
+//    public <E extends NetworkMessage> void sendNetworkMessage(E m) {
+//    	try {
+//			activity.sendMessage(NetworkingConstants.messagePackInstance.write(m));
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+//    }
+    
+    public void sendPlayerJumpMessage() {
+    	PlayerJumpMessage message = new PlayerJumpMessage();
+    	message.playerId = mId;
+    	
+//    	this.sendNetworkMessage(message);
+    	
+		FlaggedNetworkMessage flaggedMessage = new FlaggedNetworkMessage(message);
+		this.sendFlaggedMessage(flaggedMessage);
+    }
+    public void sendPlayerChangeDirectionMessage(int dir) {
+    	PlayerChangeDirectionMessage message = new PlayerChangeDirectionMessage();
+    	message.playerId = mId;
+    	message.direction = dir;
+		
+//    	this.sendNetworkMessage(message);
+    	
+    	FlaggedNetworkMessage flaggedMessage = new FlaggedNetworkMessage(message);
+		this.sendFlaggedMessage(flaggedMessage);
+    }
+    
 	@Override
 	public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent) {
 		if (pSceneTouchEvent.isActionDown())
@@ -431,15 +468,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 				xdir = 1;
 			}
 			player.setRunDirection(xdir);
-			
-			PlayerChangeDirectionMessage message = new PlayerChangeDirectionMessage(mId, xdir);
-			FlaggedNetworkMessage flaggedMessage = new FlaggedNetworkMessage(message.getFlag(), message.getBytes());
-			
-			try {
-				activity.sendMessage(NetworkingConstants.messagePackInstance.write(flaggedMessage));
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+			sendPlayerChangeDirectionMessage(xdir);
 			
 			
 			
@@ -451,35 +480,28 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 		}
 		else if (pSceneTouchEvent.isActionMove())
 		{
-//			float x = pSceneTouchEvent.getX() - camera.getXMin();
-//			float y = pSceneTouchEvent.getY() - camera.getYMin();
-//			Vector2 currentCoords = new Vector2(x, y);
-//			Vector2 displacement = currentCoords.sub(lastTouchCoords);
-//			if (Math.abs(displacement.y) > DRAG_DISTANCE && !hasJumped)
-//			{
-//				hasJumped = true;
-//				player.jump();				
-//				byte[] message = new byte[8];
-//				message[0] = (byte)mId;
-//				message[1] = (byte)1;
-//				activity.sendMessage(message);
-//			}
+			float x = pSceneTouchEvent.getX() - camera.getXMin();
+			float y = pSceneTouchEvent.getY() - camera.getYMin();
+			Vector2 currentCoords = new Vector2(x, y);
+			Vector2 displacement = currentCoords.sub(lastTouchCoords);
+			if (Math.abs(displacement.y) > DRAG_DISTANCE && !hasJumped)
+			{
+				hasJumped = true;
+				player.jump();
+				sendPlayerJumpMessage();
+			}
 		}
 		else if (pSceneTouchEvent.isActionUp())
 		{
-//			if (player.isRunning())
-//			{
-//				player.setRunDirection(0);
-//				byte[] message = new byte[8];
-//				message[0] = (byte)mId;
-//				message[1] = (byte)0;
-//				message[2] = (byte)0;
-//				activity.sendMessage(message);
-//			}
-//			if (hasJumped)
-//			{
-//				hasJumped = false;
-//			}
+			if (player.isRunning())
+			{
+				player.setRunDirection(0);
+				sendPlayerChangeDirectionMessage(0);
+			}
+			if (hasJumped)
+			{
+				hasJumped = false;
+			}
 		}
 		return false;
 	}
@@ -487,15 +509,31 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 	public void handlePlayerChangeDirectionMessage(PlayerChangeDirectionMessage msg) {
 		players[msg.playerId].setRunDirection(msg.direction);
 	}
+	public void handlePlayerJumpMessage(PlayerJumpMessage msg) {
+		players[msg.playerId].jump();
+	}
+	public void handleSetHostMessage(SetHostMessage msg) {
+		activity.setHost(msg.participantId);
+	}
+	
 	
 	public void handleMessage(byte[] message)
 	{
 		try {
-			FlaggedNetworkMessage flaggedMessage = NetworkingConstants.messagePackInstance.read(message, FlaggedNetworkMessage.class);
+			FlaggedNetworkMessage msg = NetworkingConstants.messagePackInstance.read(message, FlaggedNetworkMessage.class);
+//			NetworkMessage msg = NetworkingConstants.messagePackInstance.read(message, NetworkMessage.class);
 			
-			switch (flaggedMessage.messageFlag) {
-			case NetworkingConstants.MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_DIRECTION:
-				handlePlayerChangeDirectionMessage(NetworkingConstants.messagePackInstance.read(flaggedMessage.messageBytes, PlayerChangeDirectionMessage.class));
+			switch (msg.messageFlag) {
+//			switch (msg.flag) {
+			case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_DIRECTION:
+				handlePlayerChangeDirectionMessage(NetworkingConstants.messagePackInstance.read(msg.messageBytes, PlayerChangeDirectionMessage.class));
+				break;
+			case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_JUMP:
+				handlePlayerJumpMessage(NetworkingConstants.messagePackInstance.read(msg.messageBytes, PlayerJumpMessage.class));
+				break;
+			case MessageFlags.MESSAGE_SET_HOST:
+				handleSetHostMessage(NetworkingConstants.messagePackInstance.read(msg.messageBytes, SetHostMessage.class));
+				break;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
