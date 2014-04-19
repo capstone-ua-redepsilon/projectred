@@ -42,6 +42,8 @@ import com.google.android.gms.games.multiplayer.realtime.RoomUpdateListener;
 import com.google.example.games.basegameutils.GoogleBaseGameActivity;
 import com.uacapstone.red.manager.ResourcesManager;
 import com.uacapstone.red.manager.SceneManager;
+import com.uacapstone.red.networking.NetworkingConstants;
+import com.uacapstone.red.networking.NetworkingConstants.MessageFlags;
 import com.uacapstone.red.networking.messaging.FlaggedNetworkMessage;
 import com.uacapstone.red.networking.messaging.SetHostMessage;
 import com.uacapstone.red.scene.GameScene;
@@ -402,7 +404,7 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
 	}
 	
 	public boolean isHost() {
-		return mHostId == mMyId;
+		return mHostId.compareTo(mMyId) == 0;
 	}
 	
 	public Participant findParticipantById(String id) {
@@ -458,8 +460,20 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
         SceneManager m = SceneManager.getInstance();
         GameScene gameScene = m.getGameScene();
         
-        if (gameScene != null)
-        	gameScene.handleMessage(buf);
+        try {
+			FlaggedNetworkMessage msg = NetworkingConstants.messagePackInstance.read(buf, FlaggedNetworkMessage.class);
+			
+			if (msg.messageFlag == MessageFlags.MESSAGE_SET_HOST) {
+				SetHostMessage hostMessage = NetworkingConstants.messagePackInstance.read(msg.messageBytes, SetHostMessage.class);
+				setHost(hostMessage.participantId);
+			} else {
+				gameScene.handleMessage(msg);
+			}
+			
+        } catch (Exception e) {
+        	e.printStackTrace();
+        }
+        	
     }
     
     private enum MessageReliabilityType {
@@ -485,7 +499,7 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
     private void sendMessageToAll(FlaggedNetworkMessage message, MessageReliabilityType reliability, boolean allowSelf) {
     	for (Participant p : mParticipants) {
     		// skip sending to self, when 'allowSelf' is not set
-            if (allowSelf == false && p.getParticipantId().equals(mMyId))
+            if (allowSelf == false && p.getParticipantId().compareTo(mMyId) == 0)
                 continue;
             
             sendMessageToParticipant(message, p, reliability);
@@ -494,7 +508,7 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
     
     private void sendMessageToParticipant(FlaggedNetworkMessage message, Participant participant, MessageReliabilityType reliability) {
     	
-    	if ( mRoomId == null ) return;
+    	if ( mRoomId == null || participant == null ) return;
     	
     	byte[] rawMessage = message.getBytes();
     	

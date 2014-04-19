@@ -29,6 +29,8 @@ import org.andengine.util.level.simple.SimpleLevelEntityLoaderData;
 import org.andengine.util.level.simple.SimpleLevelLoader;
 import org.xml.sax.Attributes;
 
+import android.util.Log;
+
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
@@ -136,6 +138,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 	    	    bodiesToRemove.clear();
 	    	    
 	    	    if (activity.isHost()) {
+	    	    	Log.d("NetworkingNetworking", "Host is sending a message");
 	    	    	sendGameStateUpdate();
 	    	    }
 	    	}
@@ -151,8 +154,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     
     private PlayerServerState createStateForPlayer(Player p) {
     	PlayerServerState pState = new PlayerServerState();
-    	pState.bodyPosition = p.getBody().getPosition();
-    	pState.bodyVelocity = p.getBody().getLinearVelocity();
+    	pState.bodyPositionX = p.getBody().getPosition().x;
+    	pState.bodyPositionY = p.getBody().getPosition().y;
+    	pState.bodyVelocityX = p.getBody().getLinearVelocity().x;
+    	pState.bodyVelocityY = p.getBody().getLinearVelocity().y;
     	pState.direction = p.getRunDirection();
     	pState.id = p.getId();
 //    	pState.playerFeetDown = p.getN
@@ -448,7 +453,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     	PlayerJumpMessage message = new PlayerJumpMessage();
     	message.playerId = mId;
     	
-//    	this.sendNetworkMessage(message);
 		activity.sendMessage(new FlaggedNetworkMessage(message));
     }
     
@@ -457,7 +461,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     	message.playerId = mId;
     	message.direction = dir;
 		
-//    	this.sendNetworkMessage(message);
     	activity.sendMessage(new FlaggedNetworkMessage(message));
     }
     
@@ -527,26 +530,21 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 	}
 	
 	
-	public void handleMessage(byte[] message)
+	public void handleMessage(FlaggedNetworkMessage message) throws IOException
 	{
-		try {
-			FlaggedNetworkMessage msg = NetworkingConstants.messagePackInstance.read(message, FlaggedNetworkMessage.class);
-//			NetworkMessage msg = NetworkingConstants.messagePackInstance.read(message, NetworkMessage.class);
-			
-			switch (msg.messageFlag) {
-//			switch (msg.flag) {
-			case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_DIRECTION:
-				handlePlayerChangeDirectionMessage(NetworkingConstants.messagePackInstance.read(msg.messageBytes, PlayerChangeDirectionMessage.class));
-				break;
-			case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_JUMP:
-				handlePlayerJumpMessage(NetworkingConstants.messagePackInstance.read(msg.messageBytes, PlayerJumpMessage.class));
-				break;
-			case MessageFlags.MESSAGE_SET_HOST:
-				handleSetHostMessage(NetworkingConstants.messagePackInstance.read(msg.messageBytes, SetHostMessage.class));
-				break;
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
+		switch (message.messageFlag) {
+		case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_DIRECTION:
+			handlePlayerChangeDirectionMessage(NetworkingConstants.messagePackInstance.read(message.messageBytes, PlayerChangeDirectionMessage.class));
+			break;
+		case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_JUMP:
+			handlePlayerJumpMessage(NetworkingConstants.messagePackInstance.read(message.messageBytes, PlayerJumpMessage.class));
+			break;
+		case MessageFlags.MESSAGE_FROM_SERVER_PLAYER_STATE:
+			handleGameStateMessage(NetworkingConstants.messagePackInstance.read(message.messageBytes, GameStateMessage.class));
+			break;
+//		case MessageFlags.MESSAGE_SET_HOST:
+//			handleSetHostMessage(NetworkingConstants.messagePackInstance.read(message.messageBytes, SetHostMessage.class));
+//			break;
 		}
 		
 		
@@ -562,5 +560,17 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 //			players[i].jump();
 //		}
 		return;
+	}
+
+	private void handleGameStateMessage(GameStateMessage read) {
+		
+		for (PlayerServerState state : read.playerServerStates) {
+			for (Player p: this.players) {
+				if (p.getId() == state.id) {
+					state.applyToPlayer(p);
+				}
+			}
+		}
+		
 	}
 }
