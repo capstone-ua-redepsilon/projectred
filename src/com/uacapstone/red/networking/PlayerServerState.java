@@ -20,6 +20,6 @@ public class PlayerServerState {
 		p.getBody().setTransform(bodyPositionX, bodyPositionY, p.getBody().getAngle());
 		p.getBody().setLinearVelocity(bodyVelocityX, bodyPositionY);
 		p.setRunDirection(direction);
-		
+		p.setNumberOfFeetDown(playerFeetDown);
 	}
 }

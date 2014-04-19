@@ -2,6 +2,7 @@ package com.uacapstone.red.scene;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.andengine.engine.camera.hud.HUD;
 import org.andengine.engine.handler.IUpdateHandler;
@@ -23,6 +24,7 @@ import org.andengine.input.touch.TouchEvent;
 import org.andengine.util.SAXUtils;
 import org.andengine.util.adt.align.HorizontalAlign;
 import org.andengine.util.adt.color.Color;
+import org.andengine.util.debug.Debug;
 import org.andengine.util.level.EntityLoader;
 import org.andengine.util.level.constants.LevelConstants;
 import org.andengine.util.level.simple.SimpleLevelEntityLoaderData;
@@ -70,6 +72,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     @Override
     public void onBackKeyPressed()
     {
+    	disposeScene();
         SceneManager.getInstance().loadMenuScene(engine);
     }
 
@@ -99,11 +102,16 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     {
         gameHUD = new HUD();
         
-        // CREATE SCORE TEXT
-        flagText = new Text(20, 420, resourcesManager.font, "Flags: 0123456789", new TextOptions(HorizontalAlign.LEFT), vbom);
-        flagText.setAnchorCenter(0, 0);    
+        // CREATE TEXT
+		flagText = new Text(20, 420, resourcesManager.font, "Flags: 0123456789", new TextOptions(HorizontalAlign.LEFT), vbom);
+        timeText = new Text(20, 370, resourcesManager.font, "Time: 00:00", new TextOptions(HorizontalAlign.LEFT), vbom);
+        flagText.setAnchorCenter(0, 0);
+        timeText.setAnchorCenter(0, 0);
         flagText.setText("Flags: 0");
+        startTime = System.currentTimeMillis();
+        updateTimeDisplay();
         gameHUD.attachChild(flagText);
+        gameHUD.attachChild(timeText);
         
         camera.setHUD(gameHUD);
     }
@@ -118,8 +126,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         FIXTURE_DEF = PhysicsFactory.createFixtureDef(0, 0.01f, 0.5f);
         
         registerUpdateHandler(new IUpdateHandler() {
+        	final Date timeOfLastMessage = new Date();
 	    	@Override
 	    	public void onUpdate(float pSecondsElapsed) {
+	    		
 	    	    for (Sprite s : spritesToAdd)
 	    	    {
 	    	    	final Sprite levelObject = s;
@@ -136,9 +146,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 	    	    }
 	    	    spritesToAdd.clear();
 	    	    bodiesToRemove.clear();
+	    	    updateTimeDisplay();
 	    	    
-	    	    if (activity.isHost()) {
-	    	    	Log.d("NetworkingNetworking", "Host is sending a message");
+	    	    Date currentTime = new Date();
+	    	    if (activity.isHost() && (currentTime.getTime() - timeOfLastMessage.getTime()) > 50 ) {
+	    	    	timeOfLastMessage.setTime(currentTime.getTime());
 	    	    	sendGameStateUpdate();
 	    	    }
 	    	}
@@ -160,7 +172,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     	pState.bodyVelocityY = p.getBody().getLinearVelocity().y;
     	pState.direction = p.getRunDirection();
     	pState.id = p.getId();
-//    	pState.playerFeetDown = p.getN
+    	pState.playerFeetDown = p.getNumberOfFeetDown();
     	
     	return pState;
     }
@@ -168,6 +180,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     protected void sendGameStateUpdate() {
     	ArrayList<PlayerServerState> states = new ArrayList<PlayerServerState>();
     	for (Player p : this.players) {
+//    		Log.d("Networking", "Creating state for player " + p.getId());
     		states.add(createStateForPlayer(p));
     	}
     	
@@ -180,6 +193,18 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 	private void captureFlag()
     {
         flagText.setText("Flags: " + flagsRemaining);
+    }
+    
+    private void updateTimeDisplay()
+    {
+    	long currentTime = System.currentTimeMillis();
+    	long runTimeMill = currentTime - startTime;
+    	long second = (runTimeMill / 1000) % 60;
+    	long minute = (runTimeMill / (1000 * 60)) % 60;
+    	long hour = (runTimeMill / (1000 * 60 * 60)) % 24;
+
+    	String time = String.format("%02d:%02d", minute, second);
+    	timeText.setText("Time: " + time);
     }
     
     private void loadLevel(int levelID)
@@ -416,6 +441,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     
     private HUD gameHUD;
     private Text flagText;
+    private Text timeText;
+    private long startTime;
     private PhysicsWorld physicsWorld;
     private Player player;
     private int mId;
