@@ -254,7 +254,7 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
 	@Override
 	public void onConnectedToRoom(Room room) {
 		Log.d(TAG, "onConnectedToRoom.");
-
+		
         // get room ID, participants and my ID:
         mRoomId = room.getRoomId();
         mParticipants = room.getParticipants();
@@ -262,6 +262,8 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
         ArrayList<String> ids = new ArrayList<String>(room.getParticipantIds());
         Collections.sort(ids);
         normalizedId = ids.indexOf(mMyId);
+        
+        updateHost();
         
         // print out the list of participants (for debug purposes)
         Log.d(TAG, "Room ID: " + mRoomId);
@@ -408,8 +410,10 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
 	}
 	
 	public Participant findParticipantById(String id) {
+		if (id == null) return null;
+		
 		for (Participant p : mParticipants) {
-			if (p.getParticipantId() == id) {
+			if (p.getParticipantId().compareTo(id) == 0) {
 				return p;
 			}
 		}
@@ -423,7 +427,7 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
 			Participant host = findParticipantById(mHostId);
 			
 			// if the host does not exist or has left the room, pick a new one
-			if (host == null || host.isConnectedToRoom()==false) {
+			if (host == null || host.isConnectedToRoom() == false) {
 				mHostId = mParticipants.get(0).getParticipantId();
 				SetHostMessage msg = new SetHostMessage();
 				msg.participantId = mHostId;
@@ -485,7 +489,7 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
     	try {
     		// only send messages to other players if this player is the host,
     		// otherwise send messages to the host
-    		if (mHostId == mMyId) {
+    		if (mHostId.compareTo(mMyId) == 0) {
     			sendMessageToAll(m, MessageReliabilityType.Reliable, false);
     		} else {
     			sendMessageToParticipant(m, this.findParticipantById(mHostId), MessageReliabilityType.Reliable);
@@ -499,7 +503,8 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
     private void sendMessageToAll(FlaggedNetworkMessage message, MessageReliabilityType reliability, boolean allowSelf) {
     	for (Participant p : mParticipants) {
     		// skip sending to self, when 'allowSelf' is not set
-            if (allowSelf == false && p.getParticipantId().compareTo(mMyId) == 0)
+  
+            if (mMyId == null || allowSelf == false && p.getParticipantId().compareTo(mMyId) == 0)
                 continue;
             
             sendMessageToParticipant(message, p, reliability);

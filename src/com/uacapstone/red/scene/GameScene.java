@@ -2,6 +2,7 @@ package com.uacapstone.red.scene;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.andengine.engine.camera.hud.HUD;
 import org.andengine.engine.handler.IUpdateHandler;
@@ -23,6 +24,7 @@ import org.andengine.input.touch.TouchEvent;
 import org.andengine.util.SAXUtils;
 import org.andengine.util.adt.align.HorizontalAlign;
 import org.andengine.util.adt.color.Color;
+import org.andengine.util.debug.Debug;
 import org.andengine.util.level.EntityLoader;
 import org.andengine.util.level.constants.LevelConstants;
 import org.andengine.util.level.simple.SimpleLevelEntityLoaderData;
@@ -118,8 +120,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         FIXTURE_DEF = PhysicsFactory.createFixtureDef(0, 0.01f, 0.5f);
         
         registerUpdateHandler(new IUpdateHandler() {
+        	final Date timeOfLastMessage = new Date();
 	    	@Override
 	    	public void onUpdate(float pSecondsElapsed) {
+	    		
 	    	    for (Sprite s : spritesToAdd)
 	    	    {
 	    	    	final Sprite levelObject = s;
@@ -137,8 +141,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 	    	    spritesToAdd.clear();
 	    	    bodiesToRemove.clear();
 	    	    
-	    	    if (activity.isHost()) {
-	    	    	Log.d("NetworkingNetworking", "Host is sending a message");
+	    	    Date currentTime = new Date();
+	    	    if (activity.isHost() && (currentTime.getTime() - timeOfLastMessage.getTime()) > 50 ) {
+	    	    	timeOfLastMessage.setTime(currentTime.getTime());
 	    	    	sendGameStateUpdate();
 	    	    }
 	    	}
@@ -160,7 +165,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     	pState.bodyVelocityY = p.getBody().getLinearVelocity().y;
     	pState.direction = p.getRunDirection();
     	pState.id = p.getId();
-//    	pState.playerFeetDown = p.getN
+    	pState.playerFeetDown = p.getNumberOfFeetDown();
     	
     	return pState;
     }
@@ -168,6 +173,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     protected void sendGameStateUpdate() {
     	ArrayList<PlayerServerState> states = new ArrayList<PlayerServerState>();
     	for (Player p : this.players) {
+//    		Log.d("Networking", "Creating state for player " + p.getId());
     		states.add(createStateForPlayer(p));
     	}
     	

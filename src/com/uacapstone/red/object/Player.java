@@ -65,6 +65,14 @@ public abstract class Player extends AnimatedSprite
     	return runDirection;
     }
     
+    public int getNumberOfFeetDown() {
+    	return footContacts;
+    }
+    
+    public void setNumberOfFeetDown(int num) {
+    	footContacts = num;
+    }
+    
     public void setRunDirection(float direction)
     {
     	runDirection = (int)(direction / Math.abs(direction));
