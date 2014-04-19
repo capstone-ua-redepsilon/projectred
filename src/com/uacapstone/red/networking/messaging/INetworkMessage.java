@@ -1,4 +1,4 @@
-package com.uacapstone.red.networking;
+package com.uacapstone.red.networking.messaging;
 
 import org.msgpack.annotation.Message;
 

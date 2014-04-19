@@ -29,6 +29,8 @@ import org.andengine.util.level.simple.SimpleLevelEntityLoaderData;
 import org.andengine.util.level.simple.SimpleLevelLoader;
 import org.xml.sax.Attributes;
 
+import android.util.Log;
+
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
@@ -41,11 +43,14 @@ import com.badlogic.gdx.physics.box2d.Manifold;
 import com.uacapstone.red.base.BaseScene;
 import com.uacapstone.red.manager.SceneManager;
 import com.uacapstone.red.manager.SceneManager.SceneType;
-import com.uacapstone.red.networking.FlaggedNetworkMessage;
-import com.uacapstone.red.networking.NetworkMessage;
 import com.uacapstone.red.networking.NetworkingConstants;
 import com.uacapstone.red.networking.NetworkingConstants.MessageFlags;
-import com.uacapstone.red.networking.PlayerChangeDirectionMessage;
+import com.uacapstone.red.networking.PlayerServerState;
+import com.uacapstone.red.networking.messaging.FlaggedNetworkMessage;
+import com.uacapstone.red.networking.messaging.GameStateMessage;
+import com.uacapstone.red.networking.messaging.PlayerChangeDirectionMessage;
+import com.uacapstone.red.networking.messaging.PlayerJumpMessage;
+import com.uacapstone.red.networking.messaging.SetHostMessage;
 import com.uacapstone.red.object.Player;
 import com.uacapstone.red.object.PlayerData;
 
@@ -57,8 +62,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         createBackground();
         createHUD();
         createPhysics();
-        loadLevel(1);
-        createGameOverText();
+        loadLevel(2);
+        createCongratsText();
         setOnSceneTouchListener(this);
     }
 
@@ -137,6 +142,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 	    	    spritesToAdd.clear();
 	    	    bodiesToRemove.clear();
 	    	    updateTimeDisplay();
+	    	    
+	    	    if (activity.isHost()) {
+	    	    	Log.d("NetworkingNetworking", "Host is sending a message");
+	    	    	sendGameStateUpdate();
+	    	    }
 	    	}
 
 			@Override
@@ -148,7 +158,32 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         });
     }
     
-    private void addToScore(int i)
+    private PlayerServerState createStateForPlayer(Player p) {
+    	PlayerServerState pState = new PlayerServerState();
+    	pState.bodyPositionX = p.getBody().getPosition().x;
+    	pState.bodyPositionY = p.getBody().getPosition().y;
+    	pState.bodyVelocityX = p.getBody().getLinearVelocity().x;
+    	pState.bodyVelocityY = p.getBody().getLinearVelocity().y;
+    	pState.direction = p.getRunDirection();
+    	pState.id = p.getId();
+//    	pState.playerFeetDown = p.getN
+    	
+    	return pState;
+    }
+    
+    protected void sendGameStateUpdate() {
+    	ArrayList<PlayerServerState> states = new ArrayList<PlayerServerState>();
+    	for (Player p : this.players) {
+    		states.add(createStateForPlayer(p));
+    	}
+    	
+    	GameStateMessage stateMessage = new GameStateMessage();
+    	stateMessage.playerServerStates = states;
+    	
+    	activity.sendMessage(new FlaggedNetworkMessage(stateMessage));
+	}
+
+	private void addToScore(int i)
     {
         score += i;
         scoreText.setText("Score: " + score);
@@ -255,10 +290,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                     		@Override
                     		public void onDie()
                     		{
-                    		    if (!gameOverDisplayed)
-                    		    {
-                    		        displayGameOverText();
-                    		    }
+                    		    //getBody().setTransform(getStartPosition(), getBody().getAngle());
                     		}
                     	};
                     	levelObject = p;
@@ -386,17 +418,17 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         return contactListener;
     }
     
-    private void createGameOverText()
+    private void createCongratsText()
     {
-        gameOverText = new Text(0, 0, resourcesManager.font, "Game Over!", vbom);
+    	congratsText = new Text(0, 0, resourcesManager.font, "Congratulations!", vbom);
     }
 
-    private void displayGameOverText()
+    private void displayCongratsText()
     {
         camera.setChaseEntity(null);
-        gameOverText.setPosition(camera.getCenterX(), camera.getCenterY());
-        attachChild(gameOverText);
-        gameOverDisplayed = true;
+        congratsText.setPosition(camera.getCenterX(), camera.getCenterY());
+        attachChild(congratsText);
+        congratsDisplayed = true;
     }
     
     private HUD gameHUD;
@@ -415,8 +447,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     private static int DRAG_DISTANCE = 50;
     private static double MOVE_TOUCH_PERCENTAGE = .2;
     private boolean hasJumped = false;
-    private Text gameOverText;
-    private boolean gameOverDisplayed = false;
+    private Text congratsText;
+    private boolean congratsDisplayed = false;
 	private Body hiddenPlatformBody = null;
 	private Sprite hiddenPlatformSprite;
 	private ArrayList<Sprite> spritesToAdd = new ArrayList<Sprite>();
@@ -437,6 +469,21 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     
     private static FixtureDef FIXTURE_DEF;
     
+    public void sendPlayerJumpMessage() {
+    	PlayerJumpMessage message = new PlayerJumpMessage();
+    	message.playerId = mId;
+    	
+		activity.sendMessage(new FlaggedNetworkMessage(message));
+    }
+    
+    public void sendPlayerChangeDirectionMessage(int dir) {
+    	PlayerChangeDirectionMessage message = new PlayerChangeDirectionMessage();
+    	message.playerId = mId;
+    	message.direction = dir;
+		
+    	activity.sendMessage(new FlaggedNetworkMessage(message));
+    }
+    
 	@Override
 	public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent) {
 		if (pSceneTouchEvent.isActionDown())
@@ -454,15 +501,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 				xdir = 1;
 			}
 			player.setRunDirection(xdir);
-			
-			PlayerChangeDirectionMessage message = new PlayerChangeDirectionMessage(mId, xdir);
-			FlaggedNetworkMessage flaggedMessage = new FlaggedNetworkMessage(message.getFlag(), message.getBytes());
-			
-			try {
-				activity.sendMessage(NetworkingConstants.messagePackInstance.write(flaggedMessage));
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+			sendPlayerChangeDirectionMessage(xdir);
 			
 			
 			
@@ -474,35 +513,28 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 		}
 		else if (pSceneTouchEvent.isActionMove())
 		{
-//			float x = pSceneTouchEvent.getX() - camera.getXMin();
-//			float y = pSceneTouchEvent.getY() - camera.getYMin();
-//			Vector2 currentCoords = new Vector2(x, y);
-//			Vector2 displacement = currentCoords.sub(lastTouchCoords);
-//			if (Math.abs(displacement.y) > DRAG_DISTANCE && !hasJumped)
-//			{
-//				hasJumped = true;
-//				player.jump();				
-//				byte[] message = new byte[8];
-//				message[0] = (byte)mId;
-//				message[1] = (byte)1;
-//				activity.sendMessage(message);
-//			}
+			float x = pSceneTouchEvent.getX() - camera.getXMin();
+			float y = pSceneTouchEvent.getY() - camera.getYMin();
+			Vector2 currentCoords = new Vector2(x, y);
+			Vector2 displacement = currentCoords.sub(lastTouchCoords);
+			if (Math.abs(displacement.y) > DRAG_DISTANCE && !hasJumped)
+			{
+				hasJumped = true;
+				player.jump();
+				sendPlayerJumpMessage();
+			}
 		}
 		else if (pSceneTouchEvent.isActionUp())
 		{
-//			if (player.isRunning())
-//			{
-//				player.setRunDirection(0);
-//				byte[] message = new byte[8];
-//				message[0] = (byte)mId;
-//				message[1] = (byte)0;
-//				message[2] = (byte)0;
-//				activity.sendMessage(message);
-//			}
-//			if (hasJumped)
-//			{
-//				hasJumped = false;
-//			}
+			if (player.isRunning())
+			{
+				player.setRunDirection(0);
+				sendPlayerChangeDirectionMessage(0);
+			}
+			if (hasJumped)
+			{
+				hasJumped = false;
+			}
 		}
 		return false;
 	}
@@ -510,18 +542,29 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 	public void handlePlayerChangeDirectionMessage(PlayerChangeDirectionMessage msg) {
 		players[msg.playerId].setRunDirection(msg.direction);
 	}
+	public void handlePlayerJumpMessage(PlayerJumpMessage msg) {
+		players[msg.playerId].jump();
+	}
+	public void handleSetHostMessage(SetHostMessage msg) {
+		activity.setHost(msg.participantId);
+	}
 	
-	public void handleMessage(byte[] message)
+	
+	public void handleMessage(FlaggedNetworkMessage message) throws IOException
 	{
-		try {
-			FlaggedNetworkMessage flaggedMessage = NetworkingConstants.messagePackInstance.read(message, FlaggedNetworkMessage.class);
-			
-			switch (flaggedMessage.messageFlag) {
-			case NetworkingConstants.MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_DIRECTION:
-				handlePlayerChangeDirectionMessage(NetworkingConstants.messagePackInstance.read(flaggedMessage.messageBytes, PlayerChangeDirectionMessage.class));
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
+		switch (message.messageFlag) {
+		case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_DIRECTION:
+			handlePlayerChangeDirectionMessage(NetworkingConstants.messagePackInstance.read(message.messageBytes, PlayerChangeDirectionMessage.class));
+			break;
+		case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_JUMP:
+			handlePlayerJumpMessage(NetworkingConstants.messagePackInstance.read(message.messageBytes, PlayerJumpMessage.class));
+			break;
+		case MessageFlags.MESSAGE_FROM_SERVER_PLAYER_STATE:
+			handleGameStateMessage(NetworkingConstants.messagePackInstance.read(message.messageBytes, GameStateMessage.class));
+			break;
+//		case MessageFlags.MESSAGE_SET_HOST:
+//			handleSetHostMessage(NetworkingConstants.messagePackInstance.read(message.messageBytes, SetHostMessage.class));
+//			break;
 		}
 		
 		
@@ -537,5 +580,17 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 //			players[i].jump();
 //		}
 		return;
+	}
+
+	private void handleGameStateMessage(GameStateMessage read) {
+		
+		for (PlayerServerState state : read.playerServerStates) {
+			for (Player p: this.players) {
+				if (p.getId() == state.id) {
+					state.applyToPlayer(p);
+				}
+			}
+		}
+		
 	}
 }

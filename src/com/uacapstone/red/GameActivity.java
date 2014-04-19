@@ -24,7 +24,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.View;
 import android.view.WindowManager;
 
 import com.google.android.gms.games.Games;
@@ -43,6 +42,11 @@ import com.google.android.gms.games.multiplayer.realtime.RoomUpdateListener;
 import com.google.example.games.basegameutils.GoogleBaseGameActivity;
 import com.uacapstone.red.manager.ResourcesManager;
 import com.uacapstone.red.manager.SceneManager;
+import com.uacapstone.red.networking.NetworkingConstants;
+import com.uacapstone.red.networking.NetworkingConstants.MessageFlags;
+import com.uacapstone.red.networking.messaging.FlaggedNetworkMessage;
+import com.uacapstone.red.networking.messaging.SetHostMessage;
+import com.uacapstone.red.scene.GameScene;
 //import org.andengine.ui.activity.BaseGameActivity;
 
 /**
@@ -71,6 +75,7 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
 
     // My participant ID in the currently active game
     String mMyId = null;
+    String mHostId = null;
     
     // If non-null, this is the id of the invitation we received via the
     // invitation listener
@@ -257,7 +262,7 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
         ArrayList<String> ids = new ArrayList<String>(room.getParticipantIds());
         Collections.sort(ids);
         normalizedId = ids.indexOf(mMyId);
-
+        
         // print out the list of participants (for debug purposes)
         Log.d(TAG, "Room ID: " + mRoomId);
         Log.d(TAG, "My ID " + mMyId);
@@ -394,10 +399,48 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
 		updateRoom(room);
 	}
 	
+	public void setHost(String hostId) {
+		this.mHostId = hostId;
+	}
+	
+	public boolean isHost() {
+		return mHostId.compareTo(mMyId) == 0;
+	}
+	
+	public Participant findParticipantById(String id) {
+		for (Participant p : mParticipants) {
+			if (p.getParticipantId() == id) {
+				return p;
+			}
+		}
+		
+		return null;
+	}
+	
+	void updateHost() {
+		if (mParticipants != null) {
+			
+			Participant host = findParticipantById(mHostId);
+			
+			// if the host does not exist or has left the room, pick a new one
+			if (host == null || host.isConnectedToRoom()==false) {
+				mHostId = mParticipants.get(0).getParticipantId();
+				SetHostMessage msg = new SetHostMessage();
+				msg.participantId = mHostId;
+				
+				sendMessageToAll(new FlaggedNetworkMessage(msg), MessageReliabilityType.Unreliable, false);
+			}
+			
+		}
+	}
+	
 	void updateRoom(Room room) {
         if (room != null) {
             mParticipants = room.getParticipants();
         }
+        
+        updateHost();
+        
         /*if (mParticipants != null) {
             updatePeerScoresDisplay();
         }*/
@@ -411,48 +454,71 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
     // 'S' message, which indicates that the game should start.
     @Override
     public void onRealTimeMessageReceived(RealTimeMessage rtm) {
-    	//BaseScene gameScene = SceneManager.getInstance().
+    	
         byte[] buf = rtm.getMessageData();
-        SceneManager.getInstance().getGameScene().handleMessage(buf);
-        /*String sender = rtm.getSenderParticipantId();
-        Log.d(TAG, "Message received: " + (char) buf[0] + "/" + (int) buf[1]);
-
-        if (buf[0] == 'F' || buf[0] == 'U') {
-            // score update.
-            int existingScore = mParticipantScore.containsKey(sender) ?
-                    mParticipantScore.get(sender) : 0;
-            int thisScore = (int) buf[1];
-            if (thisScore > existingScore) {
-                // this check is necessary because packets may arrive out of
-                // order, so we
-                // should only ever consider the highest score we received, as
-                // we know in our
-                // game there is no way to lose points. If there was a way to
-                // lose points,
-                // we'd have to add a "serial number" to the packet.
-                mParticipantScore.put(sender, thisScore);
-            }
-
-            // update the scores on the screen
-            //updatePeerScoresDisplay();
-
-            // if it's a final score, mark this participant as having finished
-            // the game
-            if ((char) buf[0] == 'F') {
-                //mFinishedParticipants.add(rtm.getSenderParticipantId());
-            }
-        }*/
+        
+        SceneManager m = SceneManager.getInstance();
+        GameScene gameScene = m.getGameScene();
+        
+        try {
+			FlaggedNetworkMessage msg = NetworkingConstants.messagePackInstance.read(buf, FlaggedNetworkMessage.class);
+			
+			if (msg.messageFlag == MessageFlags.MESSAGE_SET_HOST) {
+				SetHostMessage hostMessage = NetworkingConstants.messagePackInstance.read(msg.messageBytes, SetHostMessage.class);
+				setHost(hostMessage.participantId);
+			} else {
+				gameScene.handleMessage(msg);
+			}
+			
+        } catch (Exception e) {
+        	e.printStackTrace();
+        }
+        	
     }
     
-    public void sendMessage(byte[] message)
-    {
-    	if (mMultiplayer)
-    	{
-	        for (Participant p : mParticipants) {
-	            if (p.getParticipantId().equals(mMyId))
-	                continue;
-	        	Games.RealTimeMultiplayer.sendUnreliableMessage(getApiClient(), message, mRoomId, p.getParticipantId());
-	        }
+    private enum MessageReliabilityType {
+    	Unreliable,
+    	Reliable
+    }
+    
+    public void sendMessage(FlaggedNetworkMessage m) {
+    	try {
+    		// only send messages to other players if this player is the host,
+    		// otherwise send messages to the host
+    		if (mHostId == mMyId) {
+    			sendMessageToAll(m, MessageReliabilityType.Reliable, false);
+    		} else {
+    			sendMessageToParticipant(m, this.findParticipantById(mHostId), MessageReliabilityType.Reliable);
+    		}
+		} catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+    }
+    
+    private void sendMessageToAll(FlaggedNetworkMessage message, MessageReliabilityType reliability, boolean allowSelf) {
+    	for (Participant p : mParticipants) {
+    		// skip sending to self, when 'allowSelf' is not set
+            if (allowSelf == false && p.getParticipantId().compareTo(mMyId) == 0)
+                continue;
+            
+            sendMessageToParticipant(message, p, reliability);
+        }
+    }
+    
+    private void sendMessageToParticipant(FlaggedNetworkMessage message, Participant participant, MessageReliabilityType reliability) {
+    	
+    	if ( mRoomId == null || participant == null ) return;
+    	
+    	byte[] rawMessage = message.getBytes();
+    	
+    	switch (reliability) {
+    	case Unreliable:
+    		Games.RealTimeMultiplayer.sendUnreliableMessage(getApiClient(), rawMessage, mRoomId, participant.getParticipantId());
+    		break;
+    	case Reliable:
+    		Games.RealTimeMultiplayer.sendReliableMessage(getApiClient(), null, rawMessage, mRoomId, participant.getParticipantId());
+    		break;
     	}
     }
     
