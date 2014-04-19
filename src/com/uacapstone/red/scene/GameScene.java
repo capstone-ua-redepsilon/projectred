@@ -100,10 +100,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         gameHUD = new HUD();
         
         // CREATE SCORE TEXT
-        scoreText = new Text(20, 420, resourcesManager.font, "Score: 0123456789", new TextOptions(HorizontalAlign.LEFT), vbom);
-        scoreText.setAnchorCenter(0, 0);    
-        scoreText.setText("Score: 0");
-        gameHUD.attachChild(scoreText);
+        flagText = new Text(20, 420, resourcesManager.font, "Flags: 0123456789", new TextOptions(HorizontalAlign.LEFT), vbom);
+        flagText.setAnchorCenter(0, 0);    
+        flagText.setText("Flags: 0");
+        gameHUD.attachChild(flagText);
         
         camera.setHUD(gameHUD);
     }
@@ -177,10 +177,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     	activity.sendMessage(new FlaggedNetworkMessage(stateMessage));
 	}
 
-	private void addToScore(int i)
+	private void captureFlag()
     {
-        score += i;
-        scoreText.setText("Score: " + score);
+        flagText.setText("Flags: " + flagsRemaining);
     }
     
     private void loadLevel(int levelID)
@@ -243,6 +242,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 }
                 else if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_FLAG))
                 {
+                	numFlags++;
                     levelObject = new Sprite(x, y, resourcesManager.flag_region, vbom)
                     {
                         @Override
@@ -254,7 +254,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                             {
                                 if (p.collidesWith(this))
                                 {
-                                    addToScore(10);
+                                    captureFlag();
                                     this.setVisible(false);
                                     this.setIgnoreUpdate(true);
                                 }
@@ -295,6 +295,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 
         levelLoader.loadLevelFromAsset(activity.getAssets(), "level/" + levelID + ".lvl");
 
+        flagsRemaining = numFlags;
         player = players[mId];
         camera.setChaseEntity(player);
     }
@@ -414,11 +415,12 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     }
     
     private HUD gameHUD;
-    private Text scoreText;
-    private int score = 0;
+    private Text flagText;
     private PhysicsWorld physicsWorld;
     private Player player;
     private int mId;
+    private int numFlags = 0;
+    private int flagsRemaining = 0;
     private static final int MaxPlayers = 4;
     private Player[] players;
 	private int numPlayers;
