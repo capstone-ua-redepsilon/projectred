@@ -149,7 +149,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 	    	    updateTimeDisplay();
 	    	    
 	    	    Date currentTime = new Date();
-	    	    if (activity.isHost() && (currentTime.getTime() - timeOfLastMessage.getTime()) > 50 ) {
+	    	    if (activity.isMultiplayer() == true && activity.isHost() && (currentTime.getTime() - timeOfLastMessage.getTime()) > 50 ) {
 	    	    	timeOfLastMessage.setTime(currentTime.getTime());
 	    	    	sendGameStateUpdate();
 	    	    }

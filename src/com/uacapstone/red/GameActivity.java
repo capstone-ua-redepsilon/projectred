@@ -405,6 +405,10 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
 		this.mHostId = hostId;
 	}
 	
+	public boolean isMultiplayer() {
+		return this.mMultiplayer;
+	}
+	
 	public boolean isHost() {
 		return mHostId.compareTo(mMyId) == 0;
 	}
