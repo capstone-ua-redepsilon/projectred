@@ -56,6 +56,15 @@ public abstract class Player extends AnimatedSprite
      * 
      * @param direction - number denoting left (negative) or right (positive)
      */
+    
+    public int getId() {
+    	return mId;
+    }
+    
+    public int getRunDirection() {
+    	return runDirection;
+    }
+    
     public void setRunDirection(float direction)
     {
     	runDirection = (int)(direction / Math.abs(direction));

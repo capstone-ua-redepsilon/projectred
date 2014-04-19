@@ -1,17 +1,18 @@
 package com.uacapstone.red.networking.messaging;
 
+import java.util.Date;
+import java.util.List;
+
 import org.msgpack.annotation.Message;
 
-import com.badlogic.gdx.math.Vector2;
 import com.uacapstone.red.networking.NetworkingConstants;
+import com.uacapstone.red.networking.PlayerServerState;
 
 @Message
 public class GameStateMessage extends NetworkMessage {
-	public int id;
-	public Vector2 bodyPosition;
-	public Vector2 bodyVelocity;
-	public int playerFeetDown;
-	public int direction;
+	
+	public List<PlayerServerState> playerServerStates;
+	public Date timestamp;
 	
 	public GameStateMessage() {
 		

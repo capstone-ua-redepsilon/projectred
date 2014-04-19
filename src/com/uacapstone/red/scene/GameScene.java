@@ -43,7 +43,9 @@ import com.uacapstone.red.manager.SceneManager;
 import com.uacapstone.red.manager.SceneManager.SceneType;
 import com.uacapstone.red.networking.NetworkingConstants;
 import com.uacapstone.red.networking.NetworkingConstants.MessageFlags;
+import com.uacapstone.red.networking.PlayerServerState;
 import com.uacapstone.red.networking.messaging.FlaggedNetworkMessage;
+import com.uacapstone.red.networking.messaging.GameStateMessage;
 import com.uacapstone.red.networking.messaging.PlayerChangeDirectionMessage;
 import com.uacapstone.red.networking.messaging.PlayerJumpMessage;
 import com.uacapstone.red.networking.messaging.SetHostMessage;
@@ -132,6 +134,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 	    	    }
 	    	    spritesToAdd.clear();
 	    	    bodiesToRemove.clear();
+	    	    
+	    	    if (activity.isHost()) {
+	    	    	sendGameStateUpdate();
+	    	    }
 	    	}
 
 			@Override
@@ -143,7 +149,30 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         });
     }
     
-    private void addToScore(int i)
+    private PlayerServerState createStateForPlayer(Player p) {
+    	PlayerServerState pState = new PlayerServerState();
+    	pState.bodyPosition = p.getBody().getPosition();
+    	pState.bodyVelocity = p.getBody().getLinearVelocity();
+    	pState.direction = p.getRunDirection();
+    	pState.id = p.getId();
+//    	pState.playerFeetDown = p.getN
+    	
+    	return pState;
+    }
+    
+    protected void sendGameStateUpdate() {
+    	ArrayList<PlayerServerState> states = new ArrayList<PlayerServerState>();
+    	for (Player p : this.players) {
+    		states.add(createStateForPlayer(p));
+    	}
+    	
+    	GameStateMessage stateMessage = new GameStateMessage();
+    	stateMessage.playerServerStates = states;
+    	
+    	activity.sendMessage(new FlaggedNetworkMessage(stateMessage));
+	}
+
+	private void addToScore(int i)
     {
         score += i;
         scoreText.setText("Score: " + score);
@@ -415,40 +444,21 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     
     private static FixtureDef FIXTURE_DEF;
     
-    public void sendFlaggedMessage(FlaggedNetworkMessage m) {
-    	try {
-			activity.sendUnreliableMessageToOthers(m.getBytes());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-    }
-    
-//    public <E extends NetworkMessage> void sendNetworkMessage(E m) {
-//    	try {
-//			activity.sendMessage(NetworkingConstants.messagePackInstance.write(m));
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-//    }
-    
     public void sendPlayerJumpMessage() {
     	PlayerJumpMessage message = new PlayerJumpMessage();
     	message.playerId = mId;
     	
 //    	this.sendNetworkMessage(message);
-    	
-		FlaggedNetworkMessage flaggedMessage = new FlaggedNetworkMessage(message);
-		this.sendFlaggedMessage(flaggedMessage);
+		activity.sendMessage(new FlaggedNetworkMessage(message));
     }
+    
     public void sendPlayerChangeDirectionMessage(int dir) {
     	PlayerChangeDirectionMessage message = new PlayerChangeDirectionMessage();
     	message.playerId = mId;
     	message.direction = dir;
 		
 //    	this.sendNetworkMessage(message);
-    	
-    	FlaggedNetworkMessage flaggedMessage = new FlaggedNetworkMessage(message);
-		this.sendFlaggedMessage(flaggedMessage);
+    	activity.sendMessage(new FlaggedNetworkMessage(message));
     }
     
 	@Override
