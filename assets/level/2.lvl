@@ -17,6 +17,7 @@
     <entity x="68" y="48" type="block"/>
     <entity x="68" y="80" type="block"/>
     <entity x="68" y="112" type="block"/>
+    <entity x="132" y="112" type="flag" />
     <entity x="100" y="48" type="player" />
     <entity x="164" y="48" type="player" />
     <entity x="228" y="48" type="player" />
