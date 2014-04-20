@@ -1,6 +1,7 @@
 package com.uacapstone.red.scene;
 
 import org.andengine.engine.camera.Camera;
+import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.opengl.util.GLState;
 
@@ -28,9 +29,9 @@ public class SplashScene extends BaseScene
     	       pGLState.enableDither();
     	    }
     	};
-    	        
-    	splash.setScale(1.5f);
-    	splash.setPosition(400, 240);
+    	setBackground(new Background(.2f, .2f, .2f, 1.0f));
+    	//splash.setScale(activity.getScreenWidth()/splash.getWidth(),
+    		//	activity.getScreenHeight()/splash.getHeight());
     	attachChild(splash);
     }
 

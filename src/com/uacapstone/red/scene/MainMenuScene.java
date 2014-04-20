@@ -39,7 +39,8 @@ public class MainMenuScene extends BaseScene implements IOnMenuItemClickListener
 	
 	private void createBackground()
 	{
-	    attachChild(new Sprite(400, 240, resourcesManager.menu_background_region, vbom)
+	    background = new Sprite(0, 0,
+	    		resourcesManager.menu_background_region, vbom)
 	    {
 	        @Override
 	        protected void preDraw(GLState pGLState, Camera pCamera) 
@@ -47,9 +48,12 @@ public class MainMenuScene extends BaseScene implements IOnMenuItemClickListener
 	            super.preDraw(pGLState, pCamera);
 	            pGLState.enableDither();
 	        }
-	    });
+	    };
+	    background.setScale(activity.getScreenWidth()/background.getWidth(), activity.getScreenHeight()/background.getHeight());
+	    attachChild(background);
 	}
 	
+	private Sprite background;
 	private MenuScene menuChildScene;
 	private final int MENU_SOLO = 0;
 	private final int MENU_QUICK = 1;
@@ -59,7 +63,6 @@ public class MainMenuScene extends BaseScene implements IOnMenuItemClickListener
 	private void createMenuChildScene()
 	{
 	    menuChildScene = new MenuScene(camera);
-	    menuChildScene.setPosition(190, 120);
 	    
 	    final IMenuItem soloMenuItem = new ScaleMenuItemDecorator(new SpriteMenuItem(MENU_SOLO, resourcesManager.solo_region, vbom), .75f, .7f);
 	    
@@ -79,14 +82,8 @@ public class MainMenuScene extends BaseScene implements IOnMenuItemClickListener
 	    
 	    menuChildScene.buildAnimations();
 	    menuChildScene.setBackgroundEnabled(false);
-	    
-	    soloMenuItem.setPosition(soloMenuItem.getX(), soloMenuItem.getY() - 100);
-	    
-	    quickMenuItem.setPosition(quickMenuItem.getX(), quickMenuItem.getY() - 110);
-	    
-	    inviteFriendsMenuItem.setPosition(inviteFriendsMenuItem.getX(), inviteFriendsMenuItem.getY() - 120);
-	    
-	    invitesMenuItem.setPosition(invitesMenuItem.getX(), invitesMenuItem.getY() - 130);
+
+	    menuChildScene.setPosition(activity.getScreenHalfWidth()*2/3, 50);
 	    
 	    menuChildScene.setOnMenuItemClickListener(this);
 	    

@@ -6,6 +6,7 @@ import org.andengine.entity.scene.Scene;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
 import android.app.Activity;
+import android.util.DisplayMetrics;
 
 import com.uacapstone.red.GameActivity;
 import com.uacapstone.red.manager.ResourcesManager;
@@ -40,6 +41,18 @@ public abstract class BaseScene extends Scene
         this.vbom = resourcesManager.vbom;
         this.camera = resourcesManager.camera;
         createScene();
+    }
+    
+    //---------------------------------------------
+    // METHODS
+    //---------------------------------------------
+    
+    public void resetCamera()
+    {
+        camera.setHUD(null);
+        camera.setChaseEntity(null);
+        camera.setBoundsEnabled(false);
+        camera.setCenter(0, 0);
     }
     
     //---------------------------------------------

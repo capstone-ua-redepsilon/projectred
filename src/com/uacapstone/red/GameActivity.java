@@ -15,13 +15,14 @@ import org.andengine.engine.handler.timer.TimerHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.WakeLockOptions;
-import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
+import org.andengine.engine.options.resolutionpolicy.FillResolutionPolicy;
 import org.andengine.entity.scene.Scene;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.WindowManager;
@@ -62,6 +63,10 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
     final static int RC_INVITATION_INBOX = 10001;
     final static int RC_WAITING_ROOM = 10002;
 
+    private int screenWidth;
+    private int screenHeight;
+    private int screenHalfWidth;
+    private int screenHalfHeight;
 	
 	// Room ID where the currently active game is taking place; null if we're
     // not playing.
@@ -93,8 +98,15 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
     
 	public EngineOptions onCreateEngineOptions()
 	{
-	    camera = new BoundCamera(0, 0, 800, 480);
-	    EngineOptions engineOptions = new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED, new RatioResolutionPolicy(800, 480), this.camera);
+	    DisplayMetrics outMetrics = new DisplayMetrics();
+	    getWindowManager().getDefaultDisplay().getMetrics(outMetrics);
+	    screenWidth = outMetrics.widthPixels;
+	    screenHeight = outMetrics.heightPixels;
+	    screenHalfWidth = screenWidth/2;
+	    screenHalfHeight = screenHeight/2;
+	    camera = new BoundCamera(0, 0, screenWidth, screenHeight);
+	    camera.setCenter(0, 0);
+	    EngineOptions engineOptions = new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED, new FillResolutionPolicy(), this.camera);
 	    engineOptions.getAudioOptions().setNeedsMusic(true).setNeedsSound(true);
 	    engineOptions.setWakeLockOptions(WakeLockOptions.SCREEN_ON);
 	    return engineOptions;
@@ -741,6 +753,23 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
 	public void onInvitationRemoved(String arg0) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	public int getScreenWidth()
+	{
+		return screenWidth;
+	}
+	public int getScreenHeight()
+	{
+		return screenHeight;
+	}
+	public int getScreenHalfWidth()
+	{
+		return screenHalfWidth;
+	}
+	public int getScreenHalfHeight()
+	{
+		return screenHalfHeight;
 	}
 
 }

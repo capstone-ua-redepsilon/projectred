@@ -83,9 +83,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     @Override
     public void disposeScene()
     {
-        camera.setHUD(null);
-        camera.setCenter(400, 240);
-        camera.setChaseEntity(null);
+    	resetCamera();
 
         // TODO code responsible for disposing scene
         // removing all game scene objects.
@@ -455,14 +453,12 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     
     private void createCongratsText()
     {
-    	congratsText = new Text(0, 0, resourcesManager.font, "Congratulations!", vbom);
+    	congratsText = new Text(activity.getScreenHalfWidth(), activity.getScreenHalfHeight(), resourcesManager.font, "Congratulations!", vbom);
     }
 
     private void displayCongratsText()
     {
-        camera.setChaseEntity(null);
-        congratsText.setPosition(camera.getCenterX(), camera.getCenterY());
-        attachChild(congratsText);
+    	gameHUD.attachChild(congratsText);
         congratsDisplayed = true;
     }
     
