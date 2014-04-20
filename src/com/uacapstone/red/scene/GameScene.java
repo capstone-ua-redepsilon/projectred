@@ -88,6 +88,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         camera.setHUD(null);
         camera.setCenter(400, 240);
         camera.setChaseEntity(null);
+        
+        activity.updateLeaderboard(System.currentTimeMillis() - startTime);
+    	activity.leaveRoom();
 
         // TODO code responsible for disposing scene
         // removing all game scene objects.
