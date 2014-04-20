@@ -87,7 +87,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         camera.setCenter(400, 240);
         camera.setChaseEntity(null);
         
-        activity.updateLeaderboard(System.currentTimeMillis() - startTime);
     	activity.leaveRoom();
 
         // TODO code responsible for disposing scene
@@ -213,6 +212,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         flagText.setText("Flags: " + flagsRemaining);
         if (flagsRemaining == 0)
         {
+            activity.updateLeaderboard(System.currentTimeMillis() - startTime);
         	displayCongratsText();
         	Timer timer = new Timer();
             timer.schedule(new TimerTask() {
