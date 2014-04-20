@@ -3,6 +3,8 @@ package com.uacapstone.red.scene;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.andengine.engine.camera.hud.HUD;
 import org.andengine.engine.handler.IUpdateHandler;
@@ -24,14 +26,11 @@ import org.andengine.input.touch.TouchEvent;
 import org.andengine.util.SAXUtils;
 import org.andengine.util.adt.align.HorizontalAlign;
 import org.andengine.util.adt.color.Color;
-import org.andengine.util.debug.Debug;
 import org.andengine.util.level.EntityLoader;
 import org.andengine.util.level.constants.LevelConstants;
 import org.andengine.util.level.simple.SimpleLevelEntityLoaderData;
 import org.andengine.util.level.simple.SimpleLevelLoader;
 import org.xml.sax.Attributes;
-
-import android.util.Log;
 
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
@@ -72,8 +71,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     @Override
     public void onBackKeyPressed()
     {
-    	disposeScene();
-        SceneManager.getInstance().loadMenuScene(engine);
+    	quit();
     }
 
     @Override
@@ -100,19 +98,26 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     {
         setBackground(new Background(Color.BLUE));
     }
+    
+    private void quit()
+    {
+    	disposeScene();
+        SceneManager.getInstance().loadMenuScene(engine);
+    }
 
     private void createHUD()
     {
         gameHUD = new HUD();
         
-        // CREATE SCORE TEXT
-        scoreText = new Text(20, 420, resourcesManager.font, "Flags: 0", new TextOptions(HorizontalAlign.LEFT), vbom);
+        // CREATE TEXT
+		flagText = new Text(20, 420, resourcesManager.font, "Flags: 0123456789", new TextOptions(HorizontalAlign.LEFT), vbom);
         timeText = new Text(20, 370, resourcesManager.font, "Time: 00:00", new TextOptions(HorizontalAlign.LEFT), vbom);
-        scoreText.setAnchorCenter(0, 0);
+        flagText.setAnchorCenter(0, 0);
         timeText.setAnchorCenter(0, 0);
+        flagText.setText("Flags: 0");
         startTime = System.currentTimeMillis();
         updateTimeDisplay();
-        gameHUD.attachChild(scoreText);
+        gameHUD.attachChild(flagText);
         gameHUD.attachChild(timeText);
         
         camera.setHUD(gameHUD);
@@ -192,11 +197,33 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     	activity.sendMessage(new FlaggedNetworkMessage(stateMessage));
 	}
 
-	private void addToScore(int i)
+	private void captureFlag()
     {
-        score += i;
-        scoreText.setText("Score: " + score);
+		setFlags(flagsRemaining-1);
     }
+	
+	private void resetFlags()
+	{
+        setFlags(numFlags);
+	}
+	
+	private void setFlags(int n)
+	{
+		flagsRemaining = n;
+        flagText.setText("Flags: " + flagsRemaining);
+        if (flagsRemaining == 0)
+        {
+        	displayCongratsText();
+        	Timer timer = new Timer();
+            timer.schedule(new TimerTask() {
+
+                @Override
+                public void run() {
+                    quit();
+                }
+            }, CelebrationTimeInMilliseconds);
+        }
+	}
     
     private void updateTimeDisplay()
     {
@@ -270,6 +297,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 }
                 else if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_FLAG))
                 {
+                	numFlags++;
                     levelObject = new Sprite(x, y, resourcesManager.flag_region, vbom)
                     {
                         @Override
@@ -281,7 +309,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                             {
                                 if (p.collidesWith(this))
                                 {
-                                    addToScore(1);
+                                    captureFlag();
                                     this.setVisible(false);
                                     this.setIgnoreUpdate(true);
                                 }
@@ -322,6 +350,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 
         levelLoader.loadLevelFromAsset(activity.getAssets(), "level/" + levelID + ".lvl");
 
+        resetFlags();
         player = players[mId];
         camera.setChaseEntity(player);
     }
@@ -441,13 +470,14 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     }
     
     private HUD gameHUD;
-    private Text scoreText;
+    private Text flagText;
     private Text timeText;
     private long startTime;
-    private int score = 0;
     private PhysicsWorld physicsWorld;
     private Player player;
     private int mId;
+    private int numFlags = 0;
+    private int flagsRemaining;
     private static final int MaxPlayers = 4;
     private Player[] players;
 	private int numPlayers;
@@ -463,6 +493,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 	private ArrayList<Sprite> spritesToAdd = new ArrayList<Sprite>();
 	private ArrayList<Body> bodiesToRemove = new ArrayList<Body>();
 	private int mNumPlayersOnSwitch = 0;
+	
+	private static final long CelebrationTimeInMilliseconds = 5000;
     
     private static final String TAG_ENTITY = "entity";
     private static final String TAG_ENTITY_ATTRIBUTE_X = "x";
