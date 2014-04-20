@@ -18,6 +18,7 @@ import org.andengine.engine.options.WakeLockOptions;
 import org.andengine.engine.options.resolutionpolicy.FillResolutionPolicy;
 import org.andengine.entity.scene.Scene;
 
+import android.R;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -58,6 +59,7 @@ import com.uacapstone.red.scene.GameScene;
 public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateListener, RealTimeMessageReceivedListener, RoomStatusUpdateListener, OnInvitationReceivedListener
 {
 	final static String TAG = "ButtonClicker2000";
+	final static String LEADERBOARD_ID = "CgkInKfrmaISEAIQAQ";
 	// Request codes for the UIs that we show with startActivityForResult:
     final static int RC_SELECT_PLAYERS = 10000;
     final static int RC_INVITATION_INBOX = 10001;
@@ -250,6 +252,16 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
     	Intent intent = Games.Invitations.getInvitationInboxIntent(getApiClient());
         //switchToScreen(R.id.screen_wait);
         startActivityForResult(intent, RC_INVITATION_INBOX);
+    }
+    
+    public void updateLeaderboard(long time)
+    {
+    	Games.Leaderboards.submitScore(getApiClient(), LEADERBOARD_ID, time);
+    }
+    
+    public void showLeaderboard()
+    {
+    	startActivityForResult(Games.Leaderboards.getLeaderboardIntent(getApiClient(), LEADERBOARD_ID), 0);
     }
     
     
@@ -618,12 +630,12 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
                     startGame(true);
                 } else if (responseCode == GamesActivityResultCodes.RESULT_LEFT_ROOM) {
                     // player indicated that they want to leave the room
-                    //leaveRoom();
+                    leaveRoom();
                 } else if (responseCode == Activity.RESULT_CANCELED) {
                     // Dialog was cancelled (user pressed back key, for instance). In our game,
                     // this means leaving the room too. In more elaborate games, this could mean
                     // something else (like minimizing the waiting room UI).
-                    //leaveRoom();
+                    leaveRoom();
                 }
                 break;
         }
@@ -716,7 +728,7 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
     }
     
     // Leave the room.
-    void leaveRoom() {
+    public void leaveRoom() {
         Log.d(TAG, "Leaving room.");
         //mSecondsLeft = 0;
         stopKeepingScreenOn();
@@ -735,12 +747,12 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
     // game will be
     // cancelled.
     void keepScreenOn() {
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        //getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
     
     // Clears the flag that keeps the screen on.
     void stopKeepingScreenOn() {
-        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        //getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
 	@Override

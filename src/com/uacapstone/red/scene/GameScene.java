@@ -3,6 +3,7 @@ package com.uacapstone.red.scene;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -26,6 +27,7 @@ import org.andengine.input.touch.TouchEvent;
 import org.andengine.util.SAXUtils;
 import org.andengine.util.adt.align.HorizontalAlign;
 import org.andengine.util.adt.color.Color;
+import org.andengine.util.debug.Debug;
 import org.andengine.util.level.EntityLoader;
 import org.andengine.util.level.constants.LevelConstants;
 import org.andengine.util.level.simple.SimpleLevelEntityLoaderData;
@@ -49,11 +51,13 @@ import com.uacapstone.red.networking.NetworkingConstants.MessageFlags;
 import com.uacapstone.red.networking.PlayerServerState;
 import com.uacapstone.red.networking.messaging.FlaggedNetworkMessage;
 import com.uacapstone.red.networking.messaging.GameStateMessage;
+import com.uacapstone.red.networking.messaging.NetworkMessage;
 import com.uacapstone.red.networking.messaging.PlayerChangeDirectionMessage;
 import com.uacapstone.red.networking.messaging.PlayerJumpMessage;
 import com.uacapstone.red.networking.messaging.SetHostMessage;
 import com.uacapstone.red.object.Player;
 import com.uacapstone.red.object.PlayerData;
+//github.com/capstone-ua-redepsilon/projectred.git
 
 public class GameScene extends BaseScene implements IOnSceneTouchListener
 {
@@ -84,6 +88,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     public void disposeScene()
     {
     	resetCamera();
+        
+    	activity.leaveRoom();
 
         // TODO code responsible for disposing scene
         // removing all game scene objects.
@@ -151,9 +157,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 	    	    updateTimeDisplay();
 	    	    
 	    	    Date currentTime = new Date();
-	    	    if (activity.isMultiplayer() == true && activity.isHost() && (currentTime.getTime() - timeOfLastMessage.getTime()) > 50 ) {
-	    	    	timeOfLastMessage.setTime(currentTime.getTime());
-	    	    	sendGameStateUpdate();
+	    	    if (activity.isMultiplayer()) {
+		    	    if (activity.isHost() && (currentTime.getTime() - timeOfLastMessage.getTime()) > 31 ) {
+		    	    	timeOfLastMessage.setTime(currentTime.getTime());
+		    	    	sendGameStateUpdate();
+		    	    }
 	    	    }
 	    	}
 
@@ -188,6 +196,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     	
     	GameStateMessage stateMessage = new GameStateMessage();
     	stateMessage.playerServerStates = states;
+    	stateMessage.sequenceNumber = messageSequenceNumber;
     	
     	activity.sendMessage(new FlaggedNetworkMessage(stateMessage));
 	}
@@ -208,6 +217,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         flagText.setText("Flags: " + flagsRemaining);
         if (flagsRemaining == 0)
         {
+            activity.updateLeaderboard(System.currentTimeMillis() - startTime);
         	displayCongratsText();
         	Timer timer = new Timer();
             timer.schedule(new TimerTask() {
@@ -390,7 +400,19 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                     	mNumPlayersOnSwitch++;
                     	if (mNumPlayersOnSwitch == 1)
                     	{
-                    		spritesToAdd.add(hiddenPlatformSprite);
+                    		physicsWorld.postRunnable(new Runnable() {
+
+								@Override
+								public void run() {
+									final Sprite levelObject = hiddenPlatformSprite;
+					                hiddenPlatformBody = PhysicsFactory.createBoxBody(physicsWorld, levelObject, BodyType.StaticBody, FIXTURE_DEF);
+					                hiddenPlatformBody.setUserData("platform3");
+					                hiddenPlatformSprite.setCullingEnabled(true);
+					                attachChild(hiddenPlatformSprite);
+								}
+                    			
+                    		});
+//                    		spritesToAdd.add(hiddenPlatformSprite);
                     	}
                     }
                 }
@@ -503,18 +525,26 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     
     private static FixtureDef FIXTURE_DEF;
     
+    private int messageSequenceNumber = 0;
+    
     public void sendPlayerJumpMessage() {
     	PlayerJumpMessage message = new PlayerJumpMessage();
+    	message.sequenceNumber = messageSequenceNumber++;
     	message.playerId = mId;
+    	
+    	unconfirmedMessages.add(message);
     	
 		activity.sendMessage(new FlaggedNetworkMessage(message));
     }
     
     public void sendPlayerChangeDirectionMessage(int dir) {
     	PlayerChangeDirectionMessage message = new PlayerChangeDirectionMessage();
+    	message.sequenceNumber = messageSequenceNumber++;
     	message.playerId = mId;
     	message.direction = dir;
 		
+    	unconfirmedMessages.add(message);
+    	
     	activity.sendMessage(new FlaggedNetworkMessage(message));
     }
     
@@ -583,47 +613,71 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 		activity.setHost(msg.participantId);
 	}
 	
+//	public ArrayList<FlaggedNetworkMessage> unconfirmedMessages;
+	
+	public final LinkedList<NetworkMessage> unconfirmedMessages = new LinkedList<NetworkMessage>();
 	
 	public void handleMessage(FlaggedNetworkMessage message) throws IOException
 	{
+		NetworkMessage m = null;
 		switch (message.messageFlag) {
-		case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_DIRECTION:
-			handlePlayerChangeDirectionMessage(NetworkingConstants.messagePackInstance.read(message.messageBytes, PlayerChangeDirectionMessage.class));
-			break;
-		case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_JUMP:
-			handlePlayerJumpMessage(NetworkingConstants.messagePackInstance.read(message.messageBytes, PlayerJumpMessage.class));
-			break;
 		case MessageFlags.MESSAGE_FROM_SERVER_PLAYER_STATE:
-			handleGameStateMessage(NetworkingConstants.messagePackInstance.read(message.messageBytes, GameStateMessage.class));
+			if (new Date(message.timestamp).after(lastGameStateMessageReceived)) {
+				lastGameStateMessageReceived.setTime(message.timestamp);
+				handleMessage(NetworkingConstants.messagePackInstance.read(message.messageBytes, GameStateMessage.class));
+			}
 			break;
-//		case MessageFlags.MESSAGE_SET_HOST:
-//			handleSetHostMessage(NetworkingConstants.messagePackInstance.read(message.messageBytes, SetHostMessage.class));
-//			break;
+		case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_DIRECTION:
+			if (m == null)
+				m = NetworkingConstants.messagePackInstance.read(message.messageBytes, PlayerChangeDirectionMessage.class);
+		case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_JUMP:
+			if (m == null)
+				m = NetworkingConstants.messagePackInstance.read(message.messageBytes, PlayerJumpMessage.class);
+			
+			if (m.sequenceNumber > messageSequenceNumber) {
+				handleMessage(m);
+				messageSequenceNumber = m.sequenceNumber;
+			}
 		}
-		
-		
-//		int i = message[0];
-//		int t = message[1];
-//		if (t == 0)
-//		{
-//			float d = (float)message[2];
-//			players[i].setRunDirection(d);
-//		}
-//		else
-//		{
-//			players[i].jump();
-//		}
 		return;
 	}
+	
+	public void handleMessage(NetworkMessage message) {
+		switch (message.getFlag()) {
+		case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_DIRECTION:
+			handlePlayerChangeDirectionMessage((PlayerChangeDirectionMessage)message);
+			break;
+		case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_JUMP:
+			handlePlayerJumpMessage((PlayerJumpMessage)message);
+			break;
+		case MessageFlags.MESSAGE_FROM_SERVER_PLAYER_STATE:
+			handleGameStateMessage((GameStateMessage)message);
+			break;
+		}
+	}
 
-	private void handleGameStateMessage(GameStateMessage read) {
+	final Date lastGameStateMessageReceived = new Date();
+	
+	final String TAG = "Networking";
+	
+	private void handleGameStateMessage(GameStateMessage message) {
 		
-		for (PlayerServerState state : read.playerServerStates) {
+		for (PlayerServerState state : message.playerServerStates) {
 			for (Player p: this.players) {
 				if (p.getId() == state.id) {
 					state.applyToPlayer(p);
 				}
 			}
+		}
+				
+		while (unconfirmedMessages.peek() != null && unconfirmedMessages.peek().sequenceNumber <= message.sequenceNumber) {
+			Debug.d(TAG, "head of list is lower sequence number, removing");
+			unconfirmedMessages.removeFirst();
+		}
+		
+		for (NetworkMessage m : unconfirmedMessages) {
+			Debug.d(TAG, "Fast-forwarding to message with sequence number: "+m.sequenceNumber);
+			handleMessage(m);
 		}
 		
 	}
