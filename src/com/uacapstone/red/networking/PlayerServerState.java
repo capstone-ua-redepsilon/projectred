@@ -18,7 +18,7 @@ public class PlayerServerState {
 
 	public void applyToPlayer(Player p) {
 		p.getBody().setTransform(bodyPositionX, bodyPositionY, p.getBody().getAngle());
-		p.getBody().setLinearVelocity(bodyVelocityX, bodyPositionY);
+		p.getBody().setLinearVelocity(bodyVelocityX, bodyVelocityY);
 		p.setRunDirection(direction);
 		p.setNumberOfFeetDown(playerFeetDown);
 	}
