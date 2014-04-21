@@ -278,8 +278,6 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
 	public void onConnectedToRoom(Room room) {
 		Log.d(TAG, "onConnectedToRoom.");
 
-		
-		
         // get room ID, participants and my ID:
         mRoomId = room.getRoomId();
         mConnectedToRoom = true;

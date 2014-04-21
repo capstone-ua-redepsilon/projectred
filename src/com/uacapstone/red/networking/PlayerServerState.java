@@ -11,6 +11,8 @@ public class PlayerServerState {
 	public float bodyVelocityX, bodyVelocityY;
 	public int playerFeetDown;
 	public int direction;
+	public boolean stopAnimation;
+	public boolean hasJumped;
 	
 	public PlayerServerState() {
 		
@@ -21,5 +23,8 @@ public class PlayerServerState {
 		p.getBody().setLinearVelocity(bodyVelocityX, bodyVelocityY);
 		p.setRunDirection(direction);
 		p.setNumberOfFeetDown(playerFeetDown);
+		p.setHasjumped(hasJumped);
+		if (stopAnimation)
+			p.stopAnimation();
 	}
 }

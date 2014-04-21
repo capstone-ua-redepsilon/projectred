@@ -167,7 +167,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 	    	    
 	    	    Date currentTime = new Date();
 	    	    if (activity.isMultiplayer()) {
-		    	    if (/*activity.isHost() &&*/ (currentTime.getTime() - timeOfLastMessage.getTime()) > 31 ) {
+		    	    if (/*activity.isHost() &&*/ (currentTime.getTime() - timeOfLastMessage.getTime()) > 250 ) {
 		    	    	timeOfLastMessage.setTime(currentTime.getTime());
 		    	    	sendGameStateUpdate();
 		    	    }
@@ -192,6 +192,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     	pState.direction = p.getRunDirection();
     	pState.id = p.getId();
     	pState.playerFeetDown = p.getNumberOfFeetDown();
+    	pState.hasJumped = p.getHasJumped();
     	
     	return pState;
     }
@@ -576,7 +577,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 				xdir = 1;
 			}
 			player.setRunDirection(xdir);
-			sendPlayerChangeDirectionMessage(xdir);
+			
+			sendGameStateUpdate();
+			
+//			sendPlayerChangeDirectionMessage(xdir);
 			
 			
 			
@@ -592,11 +596,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 			float y = pSceneTouchEvent.getY() - camera.getYMin();
 			Vector2 currentCoords = new Vector2(x, y);
 			Vector2 displacement = currentCoords.sub(lastTouchCoords);
-			if (Math.abs(displacement.y) > DRAG_DISTANCE && !hasJumped)
-			{
-				hasJumped = true;
+			
+			if (Math.abs(displacement.y) > DRAG_DISTANCE) {
 				player.jump();
-				sendPlayerJumpMessage();
+				sendGameStateUpdate();
 			}
 		}
 		else if (pSceneTouchEvent.isActionUp())
@@ -604,25 +607,22 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 			if (player.isRunning())
 			{
 				player.setRunDirection(0);
-				sendPlayerChangeDirectionMessage(0);
-			}
-			if (hasJumped)
-			{
-				hasJumped = false;
+				sendGameStateUpdate();
+//				sendPlayerChangeDirectionMessage(0);
 			}
 		}
 		return false;
 	}
 	
-	void handlePlayerChangeDirectionMessage(PlayerChangeDirectionMessage msg) {
-		players[msg.playerId].setRunDirection(msg.direction);
-	}
-	void handlePlayerJumpMessage(PlayerJumpMessage msg) {
-		players[msg.playerId].jump();
-	}
-	void handleSetHostMessage(SetHostMessage msg) {
-		activity.setHost(msg.participantId);
-	}
+//	void handlePlayerChangeDirectionMessage(PlayerChangeDirectionMessage msg) {
+//		players[msg.playerId].setRunDirection(msg.direction);
+//	}
+//	void handlePlayerJumpMessage(PlayerJumpMessage msg) {
+//		players[msg.playerId].jump();
+//	}
+//	void handleSetHostMessage(SetHostMessage msg) {
+//		activity.setHost(msg.participantId);
+//	}
 	
 	void handleGameStateMessage(GameStateMessage message) {
 		
@@ -650,7 +650,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 	
 	public void handleMessage(FlaggedNetworkMessage message) throws IOException
 	{
-		NetworkMessage m = null;
+//		NetworkMessage m = null;
 		switch (message.messageFlag) {
 		case MessageFlags.MESSAGE_FROM_SERVER_PLAYER_STATE:
 			if (new Date(message.timestamp).after(mLastGameStateMessageReceived)) {
@@ -658,17 +658,17 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 				handleMessage(NetworkingConstants.messagePackInstance.read(message.messageBytes, GameStateMessage.class));
 			}
 			break;
-		case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_DIRECTION:
-			if (m == null)
-				m = NetworkingConstants.messagePackInstance.read(message.messageBytes, PlayerChangeDirectionMessage.class);
-		case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_JUMP:
-			if (m == null)
-				m = NetworkingConstants.messagePackInstance.read(message.messageBytes, PlayerJumpMessage.class);
-			
-			if (m.sequenceNumber > messageSequenceNumber) {
-				handleMessage(m);
-				messageSequenceNumber = m.sequenceNumber;
-			}
+//		case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_DIRECTION:
+//			if (m == null)
+//				m = NetworkingConstants.messagePackInstance.read(message.messageBytes, PlayerChangeDirectionMessage.class);
+//		case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_JUMP:
+//			if (m == null)
+//				m = NetworkingConstants.messagePackInstance.read(message.messageBytes, PlayerJumpMessage.class);
+//			
+//			if (m.sequenceNumber > messageSequenceNumber) {
+//				handleMessage(m);
+//				messageSequenceNumber = m.sequenceNumber;
+//			}
 		}
 		return;
 	}

@@ -45,6 +45,7 @@ public abstract class Player extends AnimatedSprite
     private float speed = 5;
     private int footContacts = 0;
     private Vector2 startPosition;
+	private boolean mHasJumped;
 
     // ---------------------------------------------
     // LOGIC
@@ -114,7 +115,7 @@ public abstract class Player extends AnimatedSprite
     
     public void jump()
     {
-        if (isOnGround()) 
+        if (!mHasJumped && isOnGround()) 
         {
         	body.setLinearVelocity(new Vector2(body.getLinearVelocity().x, 12)); 
     	
@@ -124,6 +125,8 @@ public abstract class Player extends AnimatedSprite
     
     public void land()
     {
+    	mHasJumped = false;
+    	
     	if (runDirection == 0)
     	{
     		velocity = 0;
@@ -193,4 +196,12 @@ public abstract class Player extends AnimatedSprite
         });
         startPosition = new Vector2(body.getPosition());
     }
+
+	public void setHasjumped(boolean hasJumped) {
+		mHasJumped = hasJumped;
+	}
+
+	public boolean getHasJumped() {
+		return mHasJumped;
+	}
 }
