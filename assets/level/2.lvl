@@ -1,29 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
-<level width="650" height="780" numPlayers="1">   
-    <entity x="68" y="16" type="block"/>
-    <entity x="100" y="16" type="block"/>
-    <entity x="132" y="16" type="block"/>
-    <entity x="164" y="16" type="block"/>
-    <entity x="196" y="16" type="block"/>
-    <entity x="228" y="16" type="block"/>
-    <entity x="260" y="16" type="block"/>
-    <entity x="292" y="16" type="block"/>
-    <entity x="324" y="16" type="block"/>
-    <entity x="356" y="16" type="block"/>
-    <entity x="388" y="16" type="block"/>
-    <entity x="420" y="16" type="block"/>
-    <entity x="452" y="16" type="block"/>
-    <entity x="484" y="16" type="block"/>
-    <entity x="516" y="16" type="block"/>
-    <entity x="516" y="48" type="block"/>
-    <entity x="516" y="80" type="block"/>
-    <entity x="516" y="112" type="block"/>
-    <entity x="68" y="48" type="block"/>
-    <entity x="68" y="80" type="block"/>
-    <entity x="68" y="112" type="block"/>
-    <entity x="324" y="144" type="flag" />
-    <entity x="100" y="48" type="rabbit" />
-    <entity x="164" y="48" type="wizard" />
-    <entity x="228" y="48" type="joe" />
-    <entity x="292" y="48" type="joe" />
+<level width="3000" height="2000" numPlayers="1">
+    <entity x="132" y="32" type="block"/>
+    <entity x="196" y="32" type="block"/>
+    <entity x="260" y="32" type="block"/>
+    <entity x="324" y="32" type="block"/>
+    <entity x="388" y="32" type="block"/>
+    <entity x="452" y="32" type="block"/>
+    <entity x="516" y="32" type="block"/>
+    <entity x="580" y="32" type="block"/>
+    <entity x="644" y="32" type="block"/>
+    <entity x="708" y="32" type="block"/>
+    <entity x="772" y="32" type="block"/>
+    <entity x="836" y="32" type="block"/>
+    <entity x="900" y="32" type="block"/>
+    <entity x="964" y="32" type="block"/>
+    
+    <entity x="132" y="480" type="block"/>
+    <entity x="196" y="480" type="block"/>
+    <entity x="260" y="480" type="block"/>
+    <entity x="324" y="480" type="block"/>
+    <entity x="388" y="480" type="block"/>
+    <entity x="452" y="480" type="block"/>
+    <entity x="516" y="480" type="block"/>
+    <entity x="580" y="480" type="block"/>
+    <entity x="644" y="480" type="block"/>
+    
+    <entity x="132" y="160" type="block"/>
+    <entity x="196" y="160" type="block"/>
+    
+    <entity x="1028" y="96" type="block"/>
+    <entity x="1028" y="160" type="block"/>
+    
+    <entity x="772" y="224" type="block"/>
+    <entity x="836" y="224" type="block"/>
+    <entity x="900" y="224" type="block"/>
+    <entity x="964" y="224" type="block"/>
+    
+    <entity x="68" y="96" type="block"/>
+    <entity x="68" y="160" type="block"/>
+    <entity x="68" y="224" type="block"/>
+    <entity x="68" y="288" type="block"/>
+    
+    <entity x="708" y="224" type="block"/>
+    <entity x="708" y="352" type="block"/>
+    <entity x="708" y="416" type="block"/>
+    <entity x="708" y="480" type="block"/>
+    
+    <entity x="580" y="288" type="block"/>
+    <entity x="644" y="288" type="block"/>
+    
+    <entity x="964" y="96" type="flag" />
+    <entity x="100" y="104" type="rabbit" />
+    <entity x="164" y="104" type="wizard" />
+    <entity x="228" y="104" type="joe" />
+    <entity x="292" y="104" type="joe" />
 </level>
