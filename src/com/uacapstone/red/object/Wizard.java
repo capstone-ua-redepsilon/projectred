@@ -75,29 +75,17 @@ public abstract class Wizard extends Avatar
     protected void animateJump(float direction)
     {
         final long[] ANIMATE = new long[] { 100, 100 };
-        if (direction != 0)
-        {
-        	setScaleX(direction);
-        }
     	animate(ANIMATE, 5, 6, false);
     }
     @Override
     protected void animateLand(float direction)
     {
         final long[] ANIMATE = new long[] { 100, 100 };
-        if (direction != 0)
-        {
-        	setScaleX(direction);
-        }
     	animate(ANIMATE, new int[] {7, 0}, false);
     }
     @Override
     protected void animateFall(float direction)
     {
-        if (direction != 0)
-        {
-        	setScaleX(direction);
-        }
         stopAnimation();
         setCurrentTileIndex(6);
     }

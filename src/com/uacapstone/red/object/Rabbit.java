@@ -76,29 +76,17 @@ public abstract class Rabbit extends Avatar
     protected void animateJump(float direction)
     {
         final long[] ANIMATE = new long[] { 100, 100, 100, 100, 100, 100, 100 };
-        if (direction != 0)
-        {
-        	setScaleX(direction);
-        }
     	animate(ANIMATE, 16, 22, false);
     }
     @Override
     protected void animateLand(float direction)
     {
         final long[] ANIMATE = new long[] { 100, 100 };
-        if (direction != 0)
-        {
-        	setScaleX(direction);
-        }
     	animate(ANIMATE, new int[] {23, 0}, false);
     }
     @Override
     protected void animateFall(float direction)
     {
-        if (direction != 0)
-        {
-        	setScaleX(direction);
-        }
         stopAnimation();
         setCurrentTileIndex(1);
     }

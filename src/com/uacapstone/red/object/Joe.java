@@ -62,30 +62,18 @@ public abstract class Joe extends Avatar
     @Override
     protected void animateJump(float direction)
     {
-        if (direction != 0)
-        {
-        	setScaleX(direction);
-        }
     	stopAnimation();
     	this.setCurrentTileIndex(0);
     }
     @Override
     protected void animateLand(float direction)
     {
-        if (direction != 0)
-        {
-        	setScaleX(direction);
-        }
     	stopAnimation();
     	this.setCurrentTileIndex(0);
     }
     @Override
     protected void animateFall(float direction)
     {
-        if (direction != 0)
-        {
-        	setScaleX(direction);
-        }
     	stopAnimation();
     	this.setCurrentTileIndex(0);
     }
