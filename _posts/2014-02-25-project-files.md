@@ -11,9 +11,12 @@ Source code is available on [GitHub](https://github.com/capstone-ua-redepsilon/p
 
 #Documents
 [Requirements]({{ site.url }}/projectred/assets/documents/requirements.pdf)
+
 [Design]({{ site.url }}/projectred/assets/documents/design.pdf)
 
 #Presentations
 [Concept]({{ site.url }}/projectred/assets/documents/Concept.pptx)
+
 [Requirements]({{ site.url }}/projectred/assets/documents/requirements.pptx)
+
 [Design]({{ site.url }}/projectred/assets/documents/design.pptx)
