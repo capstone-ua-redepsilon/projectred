@@ -131,8 +131,8 @@ public abstract class Wizard extends Player
     	});
     	menuScene.setBackgroundEnabled(false);
     	IMenuItem scaledTornadoMenuItem = new ScaleMenuItemDecorator(tornadoMenuItem, 2.0f, 2.0f);
-    	scaledTornadoMenuItem.setX(resourceManager.activity.getScreenWidth()-scaledTornadoMenuItem.getWidth()-10);
-    	scaledTornadoMenuItem.setY(resourceManager.activity.getScreenHeight()-scaledTornadoMenuItem.getHeight()-10);
+    	scaledTornadoMenuItem.setX(resourceManager.activity.getScreenWidth()-scaledTornadoMenuItem.getWidth()-50);
+    	scaledTornadoMenuItem.setY(resourceManager.activity.getScreenHeight()-scaledTornadoMenuItem.getHeight()-50);
     	menuScene.addMenuItem(scaledTornadoMenuItem);
     	hud.setChildScene(menuScene);
     }

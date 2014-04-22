@@ -135,8 +135,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         physicsWorld = new FixedStepPhysicsWorld(60, new Vector2(0, -17), false); 
         physicsWorld.setContactListener(contactListener());
         registerUpdateHandler(physicsWorld);
-        DebugRenderer debug = new DebugRenderer(physicsWorld, vbom);
-        this.attachChild(debug);
+        //DebugRenderer debug = new DebugRenderer(physicsWorld, vbom);
+        //this.attachChild(debug);
         FIXTURE_DEF = PhysicsFactory.createFixtureDef(0, 0.01f, 0.5f);
         FIXTURE_DEF.filter.categoryBits = 0x0001;
         
