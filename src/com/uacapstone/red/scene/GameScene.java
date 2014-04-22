@@ -441,7 +441,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 	}
                 	else if (pd1.mDescription.equals("tornado"))
                 	{
-                		x2.getBody().applyForce(TornadoForce, new Vector2(0.0f, 0.0f));
+                		x2.getBody().applyForce(TornadoForce, x1.getBody().getPosition());
                 		final AvatarData pdata = pd1;
                 		physicsWorld.postRunnable(new Runnable() {
 							@Override
@@ -468,7 +468,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 	}
                 	else if (pd2.mDescription.equals("tornado"))
                 	{
-                		x1.getBody().applyForce(TornadoForce, new Vector2(0.0f, 0.0f));
+                		x1.getBody().applyForce(TornadoForce, x1.getBody().getPosition());
                 		final AvatarData pdata = pd2;
                 		physicsWorld.postRunnable(new Runnable() {
 							@Override
