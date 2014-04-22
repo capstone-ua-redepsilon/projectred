@@ -7,3 +7,4 @@ paginate: 10
 pygments: true
 
 exclude: ['README.md']
+markdown: kramdown
