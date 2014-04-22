@@ -17,7 +17,6 @@ import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.Text;
 import org.andengine.entity.text.TextOptions;
-import org.andengine.extension.debugdraw.DebugRenderer;
 import org.andengine.extension.physics.box2d.FixedStepPhysicsWorld;
 import org.andengine.extension.physics.box2d.PhysicsConnector;
 import org.andengine.extension.physics.box2d.PhysicsFactory;
@@ -40,6 +39,7 @@ import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.physics.box2d.Contact;
 import com.badlogic.gdx.physics.box2d.ContactImpulse;
 import com.badlogic.gdx.physics.box2d.ContactListener;
+import com.badlogic.gdx.physics.box2d.Filter;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.Manifold;
@@ -57,6 +57,7 @@ import com.uacapstone.red.networking.messaging.PlayerJumpMessage;
 import com.uacapstone.red.object.AverageJoe;
 import com.uacapstone.red.object.Player;
 import com.uacapstone.red.object.PlayerData;
+import com.uacapstone.red.object.Rabbit;
 import com.uacapstone.red.object.Wizard;
 //github.com/capstone-ua-redepsilon/projectred.git
 
@@ -369,6 +370,22 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                     	players[playerIndex++] = p;	
                 	}
                 }
+                else if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_RABBIT))
+                {
+                	if (playerIndex < numPlayers)
+                	{
+                    	Player p = new Rabbit(x, y, vbom, camera, physicsWorld, playerIndex)
+                    	{
+                    		@Override
+                    		public void onDie()
+                    		{
+                    		    //getBody().setTransform(getStartPosition(), getBody().getAngle());
+                    		}
+                    	};
+                    	levelObject = p;
+                    	players[playerIndex++] = p;	
+                	}
+                }
                 else
                 {
                     throw new IllegalArgumentException();
@@ -411,6 +428,23 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                     	ft = x1;
                     	o = x2;
                 	}
+                	else if (pd1.mDescription.equals("tornado"))
+                	{
+                		x2.getBody().applyForce(new Vector2(0.0f, 8.0f), new Vector2(0.0f, 0.0f));
+                		final PlayerData pdata = pd1;
+                		physicsWorld.postRunnable(new Runnable() {
+							@Override
+							public void run() {
+								if (pdata != null)
+								{
+									pdata.mSprite.setVisible(false);
+								}
+								Filter filter = new Filter();
+								filter.maskBits = 0;
+								x1.setFilterData(filter);
+							}
+                		});
+                	}
                 }
                 else if (x2.getUserData() != null && x2.getUserData() instanceof PlayerData)
                 {
@@ -420,6 +454,23 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 		pd = pd2;
                     	ft = x2;
                     	o = x1;
+                	}
+                	else if (pd2.mDescription.equals("tornado"))
+                	{
+                		x1.getBody().applyForce(new Vector2(0.0f, 8.0f), new Vector2(0.0f, 0.0f));
+                		final PlayerData pdata = pd2;
+                		physicsWorld.postRunnable(new Runnable() {
+							@Override
+							public void run() {
+								if (pdata != null)
+								{
+									pdata.mSprite.setVisible(false);
+								}
+								Filter filter = new Filter();
+								filter.maskBits = 0;
+								x2.setFilterData(filter);
+							}
+                		});
                 	}
                 }
             	if (ft != null && pd != null)
@@ -554,6 +605,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_FLAG = "flag";
     private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLAYER = "player";
     private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_WIZARD = "wizard";
+    private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_RABBIT = "rabbit";
     
     private static FixtureDef FIXTURE_DEF;
     

@@ -102,6 +102,11 @@ public abstract class Wizard extends Player
         setCurrentTileIndex(6);
     }
     
+    protected void animateCast()
+    {
+    	// TODO
+    }
+    
     @Override
     protected void setupPhysics()
     {
@@ -148,6 +153,7 @@ public abstract class Wizard extends Player
     private void castTornado()
     {
     	mCanCast = false;
+    	animateCast();
     	final ResourceManager resourceManager = ResourceManager.getInstance();
         final GameScene gameScene = SceneManager.getInstance().getGameScene();
     	final AnimatedSprite tornado = new AnimatedSprite(mX, mY, resourceManager.tornado_region, mVbom);
@@ -156,7 +162,7 @@ public abstract class Wizard extends Player
     	fixtureDef.filter.maskBits = 0x0004;
     	final Body tornadoBody = PhysicsFactory.createBoxBody(mPhysicsWorld, tornado, BodyType.KinematicBody, fixtureDef);
         gameScene.attachChild(tornado);
-    	tornadoBody.setUserData(new PlayerData(mId, "tornado"));
+    	tornadoBody.setUserData(new PlayerData(mId, "tornado", tornado));
     	tornadoBody.setFixedRotation(true);
     	tornadoBody.setLinearVelocity(new Vector2(0, 6));
         

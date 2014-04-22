@@ -52,6 +52,7 @@ public class ResourceManager
     public ITextureRegion options_region;
     public ITiledTextureRegion player_region;
     public ITiledTextureRegion wizard_region;
+    public ITiledTextureRegion rabbit_region;
     public ITiledTextureRegion tornado_region;
     
     private BitmapTextureAtlas splashTextureAtlas;
@@ -137,7 +138,7 @@ public class ResourceManager
     private void loadGameGraphics()
     {
     	BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/game/");
-        gameTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR);
+        gameTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(), 1024, 1024, TextureOptions.DEFAULT);
 
         block_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "block.png");
         platform1_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "platform1.png");
@@ -148,6 +149,7 @@ public class ResourceManager
         tornado_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "tornado.png", 2, 1);
         player_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "player.png", 3, 1);
         wizard_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "wizard.png", 8, 1);
+        rabbit_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "rabbit.png", 8, 3);
         
         try 
         {
@@ -181,6 +183,9 @@ public class ResourceManager
         switch_region = null;
         flag_region = null;
         player_region = null;
+        wizard_region = null;
+        tornado_region = null;
+        rabbit_region = null;
         
     }
     

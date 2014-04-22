@@ -22,8 +22,8 @@
     <entity x="68" y="80" type="block"/>
     <entity x="68" y="112" type="block"/>
     <entity x="324" y="144" type="flag" />
-    <entity x="100" y="48" type="wizard" />
-    <entity x="164" y="48" type="player" />
-    <entity x="228" y="48" type="wizard" />
-    <entity x="292" y="48" type="player" />
+    <entity x="100" y="48" type="rabbit" />
+    <entity x="164" y="48" type="wizard" />
+    <entity x="228" y="48" type="rabbit" />
+    <entity x="292" y="48" type="wizard" />
 </level>
