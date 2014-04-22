@@ -7,4 +7,4 @@ permalink: /files/
 
 Download the .apk [here]({{ site.url }}/assets/red.apk)
 
-Source code is available on GitHub at (https://github.com/capstone-ua-redepsilon/projectred)
+Source code is available on [GitHub](https://github.com/capstone-ua-redepsilon/projectred)
