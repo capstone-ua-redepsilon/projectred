@@ -26,6 +26,7 @@ import org.andengine.input.touch.TouchEvent;
 import org.andengine.util.SAXUtils;
 import org.andengine.util.adt.align.HorizontalAlign;
 import org.andengine.util.adt.color.Color;
+import org.andengine.util.debug.Debug;
 import org.andengine.util.level.EntityLoader;
 import org.andengine.util.level.constants.LevelConstants;
 import org.andengine.util.level.simple.SimpleLevelEntityLoaderData;
@@ -440,13 +441,17 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 {
                 	pd1 = (AvatarData)x1.getUserData();
                 	bd1 = (AvatarData)x1.getBody().getUserData();
+                	
+                	Debug.d("Player description: "+ pd1.mDescription);
+                	Debug.d("Body description: "+ bd1.mDescription);
+                	
                 	if (pd1.mDescription == "feet")
                 	{
                 		pd = pd1;
                     	ft = x1;
                     	o = x2;
                 	}
-                	else if (bd1.mDescription.equals("tornado"))
+                	else if (bd1.mDescription.compareTo("tornado") == 0)
                 	{
                 		x2.getBody().applyForce(TornadoForce, x1.getBody().getPosition());
                 		final AvatarData pdata = bd1;
@@ -468,13 +473,17 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 {
                 	pd2 = (AvatarData)x2.getUserData();
                 	bd2 = (AvatarData)x2.getBody().getUserData();
+                	
+                	Debug.d("Player description: "+ pd2.mDescription);
+                	Debug.d("Body description: "+ bd2.mDescription);
+                	
                 	if (pd2.mDescription == "feet")
                 	{
                 		pd = pd2;
                     	ft = x2;
                     	o = x1;
                 	}
-                	else if (bd2.mDescription.equals("tornado"))
+                	else if (bd2.mDescription.compareTo("tornado") == 0)
                 	{
                 		x1.getBody().applyForce(TornadoForce, x1.getBody().getPosition());
                 		final AvatarData pdata = bd2;
@@ -751,7 +760,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 		final AnimatedSprite tornado = new AnimatedSprite(x, y, resourceManager.tornado_region, vbom);
     	tornado.animate(100);
     	FixtureDef fixtureDef = PhysicsFactory.createFixtureDef(0, 0, 0);
-    	fixtureDef.filter.maskBits = 0x0004;
+    	fixtureDef.filter.categoryBits = 0x0004;
+    	fixtureDef.filter.maskBits = ~0x0002;
     	final Body tornadoBody = PhysicsFactory.createBoxBody(this.physicsWorld, tornado, BodyType.KinematicBody, fixtureDef);
         this.attachChild(tornado);
     	tornadoBody.setUserData(new AvatarData(playerId, "tornado", tornado));

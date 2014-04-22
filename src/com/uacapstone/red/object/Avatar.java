@@ -163,7 +163,7 @@ public abstract class Avatar extends AnimatedSprite
     {        
     	mFixtureDef = PhysicsFactory.createFixtureDef(0, 0, 0);
     	mFixtureDef.filter.categoryBits = 0x0002;
-    	mFixtureDef.filter.maskBits = ~0x0002;
+    	mFixtureDef.filter.maskBits = 0x0001;
         body = PhysicsFactory.createBoxBody(mPhysicsWorld, this, BodyType.DynamicBody, mFixtureDef);
         
         final PolygonShape mPoly = new PolygonShape();
@@ -174,7 +174,7 @@ public abstract class Avatar extends AnimatedSprite
         final FixtureDef pFixtureDef = PhysicsFactory.createFixtureDef(0f,0f,0f,true);
         pFixtureDef.shape = mPoly;
         pFixtureDef.filter.categoryBits = 0x0002;
-        pFixtureDef.filter.maskBits = ~0x0002;
+        pFixtureDef.filter.maskBits = 0x0001;
         feet=body.createFixture(pFixtureDef);
         feet.setUserData(new AvatarData(mId, "feet"));
         mPoly.dispose();

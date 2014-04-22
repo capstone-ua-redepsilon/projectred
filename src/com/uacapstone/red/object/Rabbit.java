@@ -1,28 +1,10 @@
 package com.uacapstone.red.object;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 import org.andengine.engine.camera.Camera;
-import org.andengine.engine.camera.hud.HUD;
-import org.andengine.entity.scene.menu.MenuScene;
-import org.andengine.entity.scene.menu.MenuScene.IOnMenuItemClickListener;
-import org.andengine.entity.scene.menu.item.AnimatedSpriteMenuItem;
-import org.andengine.entity.scene.menu.item.IMenuItem;
-import org.andengine.entity.scene.menu.item.decorator.ScaleMenuItemDecorator;
-import org.andengine.entity.sprite.AnimatedSprite;
-import org.andengine.extension.physics.box2d.PhysicsConnector;
-import org.andengine.extension.physics.box2d.PhysicsFactory;
 import org.andengine.extension.physics.box2d.PhysicsWorld;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.Body;
-import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
-import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.uacapstone.red.manager.ResourceManager;
-import com.uacapstone.red.manager.SceneManager;
-import com.uacapstone.red.scene.GameScene;
 
 /**
  * @author Mateusz Mysliwiec
@@ -39,7 +21,7 @@ public abstract class Rabbit extends Avatar
     {
         super(pX, pY, vbo, camera, physicsWorld, ResourceManager.getInstance().rabbit_region, id);
         speed = 8;
-        mFixtureDef.filter.categoryBits |= 0x0004;
+        mFixtureDef.filter.maskBits |= 0x0004;
     }
     
     // ---------------------------------------------

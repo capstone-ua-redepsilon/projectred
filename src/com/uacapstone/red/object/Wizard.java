@@ -29,6 +29,7 @@ public abstract class Wizard extends Avatar
     {
         super(pX, pY, vbo, camera, physicsWorld, ResourceManager.getInstance().wizard_region, id);
         mCanCast = true;
+//        mFixtureDef.filter.maskBits = 0x0004;
     }
     
     // ---------------------------------------------

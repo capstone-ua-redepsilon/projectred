@@ -25,8 +25,8 @@
     <entity x="580" y="480" type="block"/>
     <entity x="644" y="480" type="block"/>
     
-    <entity x="132" y="160" type="block"/>
-    <entity x="196" y="160" type="block"/>
+    <entity x="132" y="224" type="block"/>
+    <entity x="196" y="224" type="block"/>
     
     <entity x="1028" y="96" type="block"/>
     <entity x="1028" y="160" type="block"/>
