@@ -2,7 +2,7 @@ package com.uacapstone.red.networking;
 
 import org.msgpack.annotation.Message;
 
-import com.uacapstone.red.object.Player;
+import com.uacapstone.red.object.Avatar;
 
 @Message
 public class PlayerServerState {
@@ -18,7 +18,7 @@ public class PlayerServerState {
 		
 	}
 
-	public void applyToPlayer(Player p) {
+	public void applyToPlayer(Avatar p) {
 		p.getBody().setTransform(bodyPositionX, bodyPositionY, p.getBody().getAngle());
 		p.getBody().setLinearVelocity(bodyVelocityX, bodyVelocityY);
 		p.setRunDirection(direction);

@@ -29,7 +29,7 @@ import com.uacapstone.red.scene.GameScene;
  * @author www.matim-dev.com
  * @version 1.0
  */
-public abstract class Rabbit extends Player
+public abstract class Rabbit extends Avatar
 {
     // ---------------------------------------------
     // CONSTRUCTOR
@@ -110,7 +110,7 @@ public abstract class Rabbit extends Player
     }
     
     @Override
-    protected void setupHud()
+    public void setupHud()
     {
     }
 }

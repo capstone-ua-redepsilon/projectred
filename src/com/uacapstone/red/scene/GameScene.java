@@ -54,9 +54,9 @@ import com.uacapstone.red.networking.messaging.GameStateMessage;
 import com.uacapstone.red.networking.messaging.NetworkMessage;
 import com.uacapstone.red.networking.messaging.PlayerChangeDirectionMessage;
 import com.uacapstone.red.networking.messaging.PlayerJumpMessage;
-import com.uacapstone.red.object.AverageJoe;
-import com.uacapstone.red.object.Player;
-import com.uacapstone.red.object.PlayerData;
+import com.uacapstone.red.object.Joe;
+import com.uacapstone.red.object.Avatar;
+import com.uacapstone.red.object.AvatarData;
 import com.uacapstone.red.object.Rabbit;
 import com.uacapstone.red.object.Wizard;
 //github.com/capstone-ua-redepsilon/projectred.git
@@ -148,23 +148,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 	    	public void onUpdate(float pSecondsElapsed) {
 	    		// wait for the game to be resumed
 	    		if (mIsGamePaused) return;
-	    		
-	    	    for (Sprite s : spritesToAdd)
-	    	    {
-	    	    	final Sprite levelObject = s;
-	                hiddenPlatformBody = PhysicsFactory.createBoxBody(physicsWorld, levelObject, BodyType.StaticBody, FIXTURE_DEF);
-	                hiddenPlatformBody.setUserData("platform3");
-	                s.setCullingEnabled(true);
-	                attachChild(s);
-	    	    }
-	    	    for (int i=0; i<bodiesToRemove.size(); i++)
-	    	    {
-	                physicsWorld.destroyBody(bodiesToRemove.get(i));
-	                hiddenPlatformBody = null;
-	                detachChild(hiddenPlatformSprite);
-	    	    }
-	    	    spritesToAdd.clear();
-	    	    bodiesToRemove.clear();
 	    	    updateTimeDisplay();
 	    	    
 	    	    Date currentTime = new Date();
@@ -185,7 +168,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         });
     }
     
-    private PlayerServerState createStateForPlayer(Player p) {
+    private PlayerServerState createStateForPlayer(Avatar p) {
     	PlayerServerState pState = new PlayerServerState();
     	pState.bodyPositionX = p.getBody().getPosition().x;
     	pState.bodyPositionY = p.getBody().getPosition().y;
@@ -202,7 +185,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     protected void sendGameStateUpdate() {
     	ArrayList<PlayerServerState> states = new ArrayList<PlayerServerState>();
     	
-    	states.add(createStateForPlayer(this.player));
+    	states.add(createStateForPlayer(this.avatar));
     	
 //    	for (Player p : this.players) {
 //    		Log.d("Networking", "Creating state for player " + p.getId());
@@ -269,7 +252,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 final int height = SAXUtils.getIntAttributeOrThrow(pAttributes, LevelConstants.TAG_LEVEL_ATTRIBUTE_HEIGHT);
                 minPlayers = SAXUtils.getIntAttributeOrThrow(pAttributes, "numPlayers");
                 numPlayers = activity.getNumPlayers();
-                players = new Player[numPlayers];
+                avatars = new Avatar[numPlayers];
                 mId = activity.getNormalizedId();
                 
                 camera.setBounds(0, 0, width, height); // here we set camera bounds
@@ -325,7 +308,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                         {
                             super.onManagedUpdate(pSecondsElapsed);
 
-                            for (Player p : players)
+                            for (Avatar p : avatars)
                             {
                                 if (p.collidesWith(this))
                                 {
@@ -338,11 +321,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                     };
                     levelObject.registerEntityModifier(new LoopEntityModifier(new ScaleModifier(1, 1, 1.3f)));
                 }     
-                else if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLAYER))
+                else if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_JOE))
                 {
                 	if (playerIndex < numPlayers)
                 	{
-                    	Player p = new AverageJoe(x, y, vbom, camera, physicsWorld, playerIndex)
+                    	Avatar p = new Joe(x, y, vbom, camera, physicsWorld, playerIndex)
                     	{
                     		@Override
                     		public void onDie()
@@ -351,14 +334,14 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                     		}
                     	};
                     	levelObject = p;
-                    	players[playerIndex++] = p;	
+                    	avatars[playerIndex++] = p;	
                 	}
                 }
                 else if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_WIZARD))
                 {
                 	if (playerIndex < numPlayers)
                 	{
-                    	Player p = new Wizard(x, y, vbom, camera, physicsWorld, playerIndex)
+                    	Avatar p = new Wizard(x, y, vbom, camera, physicsWorld, playerIndex)
                     	{
                     		@Override
                     		public void onDie()
@@ -367,14 +350,14 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                     		}
                     	};
                     	levelObject = p;
-                    	players[playerIndex++] = p;	
+                    	avatars[playerIndex++] = p;	
                 	}
                 }
                 else if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_RABBIT))
                 {
                 	if (playerIndex < numPlayers)
                 	{
-                    	Player p = new Rabbit(x, y, vbom, camera, physicsWorld, playerIndex)
+                    	Avatar p = new Rabbit(x, y, vbom, camera, physicsWorld, playerIndex)
                     	{
                     		@Override
                     		public void onDie()
@@ -383,7 +366,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                     		}
                     	};
                     	levelObject = p;
-                    	players[playerIndex++] = p;	
+                    	avatars[playerIndex++] = p;	
                 	}
                 }
                 else
@@ -403,8 +386,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         levelLoader.loadLevelFromAsset(activity.getAssets(), "level/" + levelID + ".lvl");
 
         resetFlags();
-        player = players[mId];
-        camera.setChaseEntity(player);
+        avatar = avatars[mId];
+        avatar.setupHud();
+        camera.setChaseEntity(avatar);
     }
     
     private ContactListener contactListener()
@@ -415,13 +399,13 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
             {
                 final Fixture x1 = contact.getFixtureA();
                 final Fixture x2 = contact.getFixtureB();
-                PlayerData pd1, pd2, pd = null;
+                AvatarData pd1, pd2, pd = null;
                 Fixture ft = null;
                 Fixture o = null;
 
-                if (x1.getUserData() != null && x1.getUserData() instanceof PlayerData)
+                if (x1.getUserData() != null && x1.getUserData() instanceof AvatarData)
                 {
-                	pd1 = (PlayerData)x1.getUserData();
+                	pd1 = (AvatarData)x1.getUserData();
                 	if (pd1.mDescription == "feet")
                 	{
                 		pd = pd1;
@@ -431,7 +415,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 	else if (pd1.mDescription.equals("tornado"))
                 	{
                 		x2.getBody().applyForce(new Vector2(0.0f, 8.0f), new Vector2(0.0f, 0.0f));
-                		final PlayerData pdata = pd1;
+                		final AvatarData pdata = pd1;
                 		physicsWorld.postRunnable(new Runnable() {
 							@Override
 							public void run() {
@@ -446,9 +430,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 		});
                 	}
                 }
-                else if (x2.getUserData() != null && x2.getUserData() instanceof PlayerData)
+                else if (x2.getUserData() != null && x2.getUserData() instanceof AvatarData)
                 {
-                	pd2 = (PlayerData)x2.getUserData();
+                	pd2 = (AvatarData)x2.getUserData();
                 	if (pd2.mDescription == "feet")
                 	{
                 		pd = pd2;
@@ -458,7 +442,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 	else if (pd2.mDescription.equals("tornado"))
                 	{
                 		x1.getBody().applyForce(new Vector2(0.0f, 8.0f), new Vector2(0.0f, 0.0f));
-                		final PlayerData pdata = pd2;
+                		final AvatarData pdata = pd2;
                 		physicsWorld.postRunnable(new Runnable() {
 							@Override
 							public void run() {
@@ -475,7 +459,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 }
             	if (ft != null && pd != null)
             	{
-                    players[Integer.parseInt(pd.mId)].increaseFootContacts();
+                    avatars[Integer.parseInt(pd.mId)].increaseFootContacts();
                     if (o.getBody().getUserData() != null && o.getBody().getUserData().equals("switch"))
                     {
                     	mNumPlayersOnSwitch++;
@@ -493,7 +477,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 								}
                     			
                     		});
-//                    		spritesToAdd.add(hiddenPlatformSprite);
                     	}
                     }
                 }
@@ -503,13 +486,13 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
             {
             	final Fixture x1 = contact.getFixtureA();
                 final Fixture x2 = contact.getFixtureB();
-                PlayerData pd1, pd2, pd = null;
+                AvatarData pd1, pd2, pd = null;
                 Fixture ft = null;
                 Fixture o = null;
 
-                if (x1.getUserData() != null && x1.getUserData() instanceof PlayerData)
+                if (x1.getUserData() != null && x1.getUserData() instanceof AvatarData)
                 {
-                	pd1 = (PlayerData)x1.getUserData();
+                	pd1 = (AvatarData)x1.getUserData();
                 	if (pd1.mDescription == "feet")
                 	{
                 		pd = pd1;
@@ -517,9 +500,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                     	o = x2;
                 	}
                 }
-                else if (x2.getUserData() != null && x2.getUserData() instanceof PlayerData)
+                else if (x2.getUserData() != null && x2.getUserData() instanceof AvatarData)
                 {
-                	pd2 = (PlayerData)x2.getUserData();
+                	pd2 = (AvatarData)x2.getUserData();
                 	if (pd2.mDescription == "feet")
                 	{
                 		pd = pd2;
@@ -529,13 +512,22 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 }
             	if (ft != null && pd != null)
             	{
-                    players[Integer.parseInt(pd.mId)].decreaseFootContacts();
+                    avatars[Integer.parseInt(pd.mId)].decreaseFootContacts();
                     if (o.getBody().getUserData() != null && o.getBody().getUserData().equals("switch"))
                     {
                     	mNumPlayersOnSwitch--;
-                    	if (mNumPlayersOnSwitch == 0)
+                    	if (mNumPlayersOnSwitch == 0 && hiddenPlatformBody != null)
                     	{
-                    		bodiesToRemove.add(hiddenPlatformBody);
+                    		physicsWorld.postRunnable(new Runnable() {
+
+								@Override
+								public void run() {
+					                physicsWorld.destroyBody(hiddenPlatformBody);
+					                hiddenPlatformBody = null;
+					                detachChild(hiddenPlatformSprite);
+								}
+                    			
+                    		});
                     	}
                     }
                 }
@@ -570,12 +562,12 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     private Text timeText;
     private long startTime;
     private PhysicsWorld physicsWorld;
-    private Player player;
+    private Avatar avatar;
     private int mId;
     private int numFlags = 0;
     private int flagsRemaining;
     private static final int MaxPlayers = 4;
-    private Player[] players;
+    private Avatar[] avatars;
 	private int numPlayers;
 	private int minPlayers = 0;
     private Vector2 lastTouchCoords;
@@ -587,8 +579,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     private boolean congratsDisplayed = false;
 	private Body hiddenPlatformBody = null;
 	private Sprite hiddenPlatformSprite;
-	private ArrayList<Sprite> spritesToAdd = new ArrayList<Sprite>();
-	private ArrayList<Body> bodiesToRemove = new ArrayList<Body>();
 	private int mNumPlayersOnSwitch = 0;
 	
 	private static final long CelebrationTimeInMilliseconds = 5000;
@@ -603,7 +593,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLATFORM2 = "platform2";
     private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_SWITCH = "switch";
     private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_FLAG = "flag";
-    private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLAYER = "player";
+    private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_JOE = "joe";
     private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_WIZARD = "wizard";
     private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_RABBIT = "rabbit";
     
@@ -650,7 +640,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 					xdir = 1;
 				}
 			}
-			player.setRunDirection(xdir);
+			avatar.setRunDirection(xdir);
 			
 			sendGameStateUpdate();
 			
@@ -672,15 +662,15 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 			Vector2 displacement = currentCoords.sub(lastTouchCoords);
 			
 			if (Math.abs(displacement.y) > DRAG_DISTANCE) {
-				player.jump();
+				avatar.jump();
 				sendGameStateUpdate();
 			}
 		}
 		else if (pSceneTouchEvent.isActionUp())
 		{
-			if (player.isRunning())
+			if (avatar.isRunning())
 			{
-				player.setRunDirection(0);
+				avatar.setRunDirection(0);
 				sendGameStateUpdate();
 //				sendPlayerChangeDirectionMessage(0);
 			}
@@ -701,7 +691,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 	void handleGameStateMessage(GameStateMessage message) {
 		
 		for (PlayerServerState state : message.playerServerStates) {
-			for (Player p: this.players) {
+			for (Avatar p: this.avatars) {
 				if (p.getId() == state.id) {
 					state.applyToPlayer(p);
 				}

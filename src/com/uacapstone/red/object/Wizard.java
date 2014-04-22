@@ -29,7 +29,7 @@ import com.uacapstone.red.scene.GameScene;
  * @author www.matim-dev.com
  * @version 1.0
  */
-public abstract class Wizard extends Player
+public abstract class Wizard extends Avatar
 {
     // ---------------------------------------------
     // CONSTRUCTOR
@@ -114,7 +114,7 @@ public abstract class Wizard extends Player
     }
     
     @Override
-    protected void setupHud()
+    public void setupHud()
     {
     	ResourceManager resourceManager = ResourceManager.getInstance();
     	final HUD hud = mCamera.getHUD();
@@ -162,7 +162,7 @@ public abstract class Wizard extends Player
     	fixtureDef.filter.maskBits = 0x0004;
     	final Body tornadoBody = PhysicsFactory.createBoxBody(mPhysicsWorld, tornado, BodyType.KinematicBody, fixtureDef);
         gameScene.attachChild(tornado);
-    	tornadoBody.setUserData(new PlayerData(mId, "tornado", tornado));
+    	tornadoBody.setUserData(new AvatarData(mId, "tornado", tornado));
     	tornadoBody.setFixedRotation(true);
     	tornadoBody.setLinearVelocity(new Vector2(0, 6));
         

@@ -21,13 +21,13 @@ import com.uacapstone.red.manager.ResourceManager;
  * @author www.matim-dev.com
  * @version 1.0
  */
-public abstract class Player extends AnimatedSprite
+public abstract class Avatar extends AnimatedSprite
 {
     // ---------------------------------------------
     // CONSTRUCTOR
     // ---------------------------------------------
     
-    public Player(float pX, float pY, VertexBufferObjectManager vbom, Camera camera, PhysicsWorld physicsWorld, ITiledTextureRegion region, int id)
+    public Avatar(float pX, float pY, VertexBufferObjectManager vbom, Camera camera, PhysicsWorld physicsWorld, ITiledTextureRegion region, int id)
     {
         super(pX, pY, region, vbom);
         mVbom = vbom;
@@ -64,8 +64,8 @@ public abstract class Player extends AnimatedSprite
     protected abstract void animateJump(float direction);
     protected abstract void animateLand(float direction);
     protected abstract void animateFall(float direction);
-    protected abstract void setupHud();
     protected abstract void setupPhysics();
+    public abstract void setupHud();
     public abstract void onDie();
     
     /**
@@ -175,10 +175,10 @@ public abstract class Player extends AnimatedSprite
         final FixtureDef pFixtureDef = PhysicsFactory.createFixtureDef(0f,0f,0f,true);
         pFixtureDef.shape = mPoly;
         feet=body.createFixture(pFixtureDef);
-        feet.setUserData(new PlayerData(mId, "feet"));
+        feet.setUserData(new AvatarData(mId, "feet"));
         mPoly.dispose();
         
-        body.setUserData(new PlayerData(mId, "player"));
+        body.setUserData(new AvatarData(mId, "player"));
         body.setFixedRotation(true);
         
         mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(this, body, true, false)

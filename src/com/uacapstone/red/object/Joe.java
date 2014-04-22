@@ -22,13 +22,13 @@ import com.uacapstone.red.manager.ResourceManager;
  * @author www.matim-dev.com
  * @version 1.0
  */
-public abstract class AverageJoe extends Player
+public abstract class Joe extends Avatar
 {
     // ---------------------------------------------
     // CONSTRUCTOR
     // ---------------------------------------------
     
-    public AverageJoe(float pX, float pY, VertexBufferObjectManager vbo, Camera camera, PhysicsWorld physicsWorld, int id)
+    public Joe(float pX, float pY, VertexBufferObjectManager vbo, Camera camera, PhysicsWorld physicsWorld, int id)
     {
         super(pX, pY, vbo, camera, physicsWorld, ResourceManager.getInstance().player_region, id);
     }
@@ -96,7 +96,7 @@ public abstract class AverageJoe extends Player
     }
     
     @Override
-    protected void setupHud()
+    public void setupHud()
     {
     }
 }
