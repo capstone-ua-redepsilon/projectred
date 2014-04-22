@@ -1,0 +1,26 @@
+---
+layout: default
+---
+<article class="post">
+
+	{% if page.external-url %}
+		<h3 class="header-level-1">
+			<a href="{{ page.external-url }}">{{ page.title }}</a>
+		</h3>
+	{% else %}
+		<h3 class="header-level-1">
+		  <a href="{{ page.url }}">{{ page.title }}</a>
+		</h3>
+	{% endif %}
+
+	<div class="post-content">
+	<video width="320" height="240" controls>
+		<source src="https://github.com/capstone-ua-redepsilon/projectred/blob/gh-pages/assets/demo.mp4?raw=true" type="video/mp4">
+		Your browser does not support the video tag.
+	</video>
+{{ content }}
+	</div>
+
+	<p class="meta">Posted on <span class="postdate">{{ page.date | date: "%b %d, %Y" }}</span></p>
+
+</article>
