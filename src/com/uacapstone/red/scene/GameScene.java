@@ -48,15 +48,18 @@ import com.uacapstone.red.manager.SceneManager;
 import com.uacapstone.red.manager.SceneManager.SceneType;
 import com.uacapstone.red.networking.NetworkingConstants;
 import com.uacapstone.red.networking.NetworkingConstants.MessageFlags;
-import com.uacapstone.red.networking.PlayerServerState;
+import com.uacapstone.red.networking.PhysicsBodyState;
+import com.uacapstone.red.networking.PlayerState;
+import com.uacapstone.red.networking.WizardPlayerState;
 import com.uacapstone.red.networking.messaging.FlaggedNetworkMessage;
-import com.uacapstone.red.networking.messaging.GameStateMessage;
 import com.uacapstone.red.networking.messaging.NetworkMessage;
 import com.uacapstone.red.networking.messaging.PlayerChangeDirectionMessage;
 import com.uacapstone.red.networking.messaging.PlayerJumpMessage;
 import com.uacapstone.red.object.Joe;
 import com.uacapstone.red.object.Avatar;
 import com.uacapstone.red.object.AvatarData;
+import com.uacapstone.red.networking.messaging.PlayerStateMessage;
+import com.uacapstone.red.networking.messaging.WizardPlayerStateMessage;
 import com.uacapstone.red.object.Rabbit;
 import com.uacapstone.red.object.Wizard;
 //github.com/capstone-ua-redepsilon/projectred.git
@@ -168,12 +171,15 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         });
     }
     
-    private PlayerServerState createStateForPlayer(Avatar p) {
-    	PlayerServerState pState = new PlayerServerState();
-    	pState.bodyPositionX = p.getBody().getPosition().x;
-    	pState.bodyPositionY = p.getBody().getPosition().y;
-    	pState.bodyVelocityX = p.getBody().getLinearVelocity().x;
-    	pState.bodyVelocityY = p.getBody().getLinearVelocity().y;
+    private PlayerState createStateForPlayer(Avatar p) {
+    	PlayerState pState = new PlayerState();
+    	PhysicsBodyState bodyState = new PhysicsBodyState();
+    	bodyState.x = p.getBody().getPosition().x;
+    	bodyState.y = p.getBody().getPosition().y;
+    	bodyState.velocityX = p.getBody().getLinearVelocity().x;
+    	bodyState.velocityY = p.getBody().getLinearVelocity().y;
+    	
+    	pState.bodyState = bodyState;
     	pState.direction = p.getRunDirection();
     	pState.id = p.getId();
     	pState.playerFeetDown = p.getNumberOfFeetDown();
@@ -183,20 +189,41 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     }
     
     protected void sendGameStateUpdate() {
-    	ArrayList<PlayerServerState> states = new ArrayList<PlayerServerState>();
+    	// State updates for local player
     	
-    	states.add(createStateForPlayer(this.avatar));
+    	PlayerState genericState = createStateForPlayer(this.avatar);
     	
-//    	for (Player p : this.players) {
-//    		Log.d("Networking", "Creating state for player " + p.getId());
-//    		states.add(createStateForPlayer(p));
-//    	}
+    	NetworkMessage msgToSend = null;
     	
-    	GameStateMessage stateMessage = new GameStateMessage();
-    	stateMessage.playerServerStates = states;
-    	stateMessage.sequenceNumber = messageSequenceNumber;
+    	// State updates for other entities (abilities)
+    	if (this.avatar.getClass() == Wizard.class)
+    	{
+    		WizardPlayerStateMessage stateMessage = new WizardPlayerStateMessage();
+    		
+    		WizardPlayerState wizardState = new WizardPlayerState();
+    		wizardState.playerState = genericState;
+    		
+    		stateMessage.state = wizardState;
+    		
+    		msgToSend = stateMessage;
+    	}
+    	else if (this.avatar.getClass() == Joe.class)
+    	{
+    		PlayerStateMessage stateMessage = new PlayerStateMessage();
+    		stateMessage.state = genericState;
+    		
+    		msgToSend = stateMessage;
+    	}
+    	else 
+    	{
+    		PlayerStateMessage stateMessage = new PlayerStateMessage();
+    		stateMessage.state = genericState;
+    		
+    		msgToSend = stateMessage;
+    	}
     	
-    	activity.sendMessage(new FlaggedNetworkMessage(stateMessage));
+    	msgToSend.sequenceNumber = messageSequenceNumber++;
+    	activity.sendMessage(new FlaggedNetworkMessage(msgToSend));
 	}
 
 	private void captureFlag()
@@ -601,22 +628,22 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     
     private int messageSequenceNumber = 0;
     
-    public void sendPlayerJumpMessage() {
-    	PlayerJumpMessage message = new PlayerJumpMessage();
-    	message.sequenceNumber = messageSequenceNumber++;
-    	message.playerId = mId;
-    	
-		activity.sendMessage(new FlaggedNetworkMessage(message));
-    }
+//    public void sendPlayerJumpMessage() {
+//    	PlayerJumpMessage message = new PlayerJumpMessage();
+//    	message.sequenceNumber = messageSequenceNumber++;
+//    	message.playerId = mId;
+//    	
+//		activity.sendMessage(new FlaggedNetworkMessage(message));
+//    }
     
-    public void sendPlayerChangeDirectionMessage(int dir) {
-    	PlayerChangeDirectionMessage message = new PlayerChangeDirectionMessage();
-    	message.sequenceNumber = messageSequenceNumber++;
-    	message.playerId = mId;
-    	message.direction = dir;
-    	
-    	activity.sendMessage(new FlaggedNetworkMessage(message));
-    }
+//    public void sendPlayerChangeDirectionMessage(int dir) {
+//    	PlayerChangeDirectionMessage message = new PlayerChangeDirectionMessage();
+//    	message.sequenceNumber = messageSequenceNumber++;
+//    	message.playerId = mId;
+//    	message.direction = dir;
+//    	
+//    	activity.sendMessage(new FlaggedNetworkMessage(message));
+//    }
     
 	@Override
 	public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent) {
@@ -688,25 +715,24 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 //		activity.setHost(msg.participantId);
 //	}
 	
-	void handleGameStateMessage(GameStateMessage message) {
+	void handlePlayerStateMessage(PlayerStateMessage message) {
 		
-		for (PlayerServerState state : message.playerServerStates) {
-			for (Avatar p: this.avatars) {
-				if (p.getId() == state.id) {
-					state.applyToPlayer(p);
-				}
+		for (Avatar p: this.avatars) {
+			if (p.getId() == message.state.id) {
+				message.state.apply(p);
 			}
 		}
-				
-//		while (unconfirmedMessages.peek() != null && unconfirmedMessages.peek().sequenceNumber <= message.sequenceNumber) {
-//			Debug.d(TAG, "head of list is lower sequence number, removing");
-//			unconfirmedMessages.removeFirst();
-//		}
-//		
-//		for (NetworkMessage m : unconfirmedMessages) {
-//			Debug.d(TAG, "Fast-forwarding to message with sequence number: "+m.sequenceNumber);
-//			handleMessage(m);
-//		}
+	}
+	
+	void handleWizardPlayerStateMessage(WizardPlayerStateMessage message) {
+		
+		// handle wizard thingies
+		
+		
+		// handle player thingies
+		PlayerStateMessage fakeMessage = new PlayerStateMessage();
+		fakeMessage.state = message.state.playerState;
+		handlePlayerStateMessage(fakeMessage);
 		
 	}
 	
@@ -719,7 +745,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 		case MessageFlags.MESSAGE_FROM_SERVER_PLAYER_STATE:
 			if (new Date(message.timestamp).after(mLastGameStateMessageReceived)) {
 				mLastGameStateMessageReceived.setTime(message.timestamp);
-				handleMessage(NetworkingConstants.messagePackInstance.read(message.messageBytes, GameStateMessage.class));
+				handleMessage(NetworkingConstants.messagePackInstance.read(message.messageBytes, PlayerStateMessage.class));
 			}
 			break;
 //		case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_DIRECTION:
@@ -746,7 +772,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 //			handlePlayerJumpMessage((PlayerJumpMessage)message);
 //			break;
 		case MessageFlags.MESSAGE_FROM_SERVER_PLAYER_STATE:
-			handleGameStateMessage((GameStateMessage)message);
+			handlePlayerStateMessage((PlayerStateMessage)message);
 			break;
 		}
 	}
