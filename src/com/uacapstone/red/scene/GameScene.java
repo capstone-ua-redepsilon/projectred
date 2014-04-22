@@ -441,7 +441,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 	}
                 	else if (pd1.mDescription.equals("tornado"))
                 	{
-                		x2.getBody().applyForce(new Vector2(0.0f, 8.0f), new Vector2(0.0f, 0.0f));
+                		x2.getBody().applyForce(TornadoForce, new Vector2(0.0f, 0.0f));
                 		final AvatarData pdata = pd1;
                 		physicsWorld.postRunnable(new Runnable() {
 							@Override
@@ -468,7 +468,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 	}
                 	else if (pd2.mDescription.equals("tornado"))
                 	{
-                		x1.getBody().applyForce(new Vector2(0.0f, 8.0f), new Vector2(0.0f, 0.0f));
+                		x1.getBody().applyForce(TornadoForce, new Vector2(0.0f, 0.0f));
                 		final AvatarData pdata = pd2;
                 		physicsWorld.postRunnable(new Runnable() {
 							@Override
@@ -609,6 +609,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 	private int mNumPlayersOnSwitch = 0;
 	
 	private static final long CelebrationTimeInMilliseconds = 5000;
+	private static final Vector2 TornadoForce = new Vector2(0.0f, 8.0f);
     
     private static final String TAG_ENTITY = "entity";
     private static final String TAG_ENTITY_ATTRIBUTE_X = "x";
