@@ -6,15 +6,15 @@ import java.util.List;
 import org.msgpack.annotation.Message;
 
 import com.uacapstone.red.networking.NetworkingConstants;
-import com.uacapstone.red.networking.PlayerServerState;
+import com.uacapstone.red.networking.PlayerState;
 
 @Message
-public class GameStateMessage extends NetworkMessage {
+public class PlayerStateMessage extends NetworkMessage {
 	
-	public List<PlayerServerState> playerServerStates;
-	public Date timestamp;
+//	public List<PlayerState> playerStates;
+	public PlayerState state;
 	
-	public GameStateMessage() {
+	public PlayerStateMessage() {
 		
 	}
 	
