@@ -40,7 +40,7 @@ public class MainMenuScene extends BaseScene implements IOnMenuItemClickListener
 	private void createBackground()
 	{
 	    background = new Sprite(0, 0,
-	    		resourcesManager.menu_background_region, vbom)
+	    		resourceManager.menu_background_region, vbom)
 	    {
 	        @Override
 	        protected void preDraw(GLState pGLState, Camera pCamera) 
@@ -64,13 +64,13 @@ public class MainMenuScene extends BaseScene implements IOnMenuItemClickListener
 	{
 	    menuChildScene = new MenuScene(camera);
 	    
-	    final IMenuItem soloMenuItem = new ScaleMenuItemDecorator(new SpriteMenuItem(MENU_SOLO, resourcesManager.solo_region, vbom), .75f, .7f);
+	    final IMenuItem soloMenuItem = new ScaleMenuItemDecorator(new SpriteMenuItem(MENU_SOLO, resourceManager.solo_region, vbom), .75f, .7f);
 	    
-	    final IMenuItem quickMenuItem = new ScaleMenuItemDecorator(new SpriteMenuItem(MENU_QUICK, resourcesManager.quick_region, vbom), .75f, .7f);
+	    final IMenuItem quickMenuItem = new ScaleMenuItemDecorator(new SpriteMenuItem(MENU_QUICK, resourceManager.quick_region, vbom), .75f, .7f);
 	    
-	    final IMenuItem inviteFriendsMenuItem = new ScaleMenuItemDecorator(new SpriteMenuItem(MENU_FRIENDS, resourcesManager.friends_region, vbom), .75f, .7f);
+	    final IMenuItem inviteFriendsMenuItem = new ScaleMenuItemDecorator(new SpriteMenuItem(MENU_FRIENDS, resourceManager.friends_region, vbom), .75f, .7f);
 	    
-	    final IMenuItem invitesMenuItem = new ScaleMenuItemDecorator(new SpriteMenuItem(MENU_INVITES, resourcesManager.invites_region, vbom), .75f, .7f);
+	    final IMenuItem invitesMenuItem = new ScaleMenuItemDecorator(new SpriteMenuItem(MENU_INVITES, resourceManager.invites_region, vbom), .75f, .7f);
 	    
 	    menuChildScene.addMenuItem(soloMenuItem);
 	    

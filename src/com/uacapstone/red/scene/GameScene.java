@@ -3,7 +3,6 @@ package com.uacapstone.red.scene;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -27,7 +26,6 @@ import org.andengine.input.touch.TouchEvent;
 import org.andengine.util.SAXUtils;
 import org.andengine.util.adt.align.HorizontalAlign;
 import org.andengine.util.adt.color.Color;
-import org.andengine.util.debug.Debug;
 import org.andengine.util.level.EntityLoader;
 import org.andengine.util.level.constants.LevelConstants;
 import org.andengine.util.level.simple.SimpleLevelEntityLoaderData;
@@ -35,6 +33,7 @@ import org.andengine.util.level.simple.SimpleLevelLoader;
 import org.xml.sax.Attributes;
 
 import android.annotation.SuppressLint;
+
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
@@ -55,9 +54,10 @@ import com.uacapstone.red.networking.messaging.GameStateMessage;
 import com.uacapstone.red.networking.messaging.NetworkMessage;
 import com.uacapstone.red.networking.messaging.PlayerChangeDirectionMessage;
 import com.uacapstone.red.networking.messaging.PlayerJumpMessage;
-import com.uacapstone.red.networking.messaging.SetHostMessage;
+import com.uacapstone.red.object.AverageJoe;
 import com.uacapstone.red.object.Player;
 import com.uacapstone.red.object.PlayerData;
+import com.uacapstone.red.object.Wizard;
 //github.com/capstone-ua-redepsilon/projectred.git
 
 @SuppressLint("DefaultLocale")
@@ -117,8 +117,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         gameHUD = new HUD();
         
         // CREATE TEXT
-		flagText = new Text(20, 420, resourcesManager.font, "Flags: 0123456789", new TextOptions(HorizontalAlign.LEFT), vbom);
-        timeText = new Text(20, 370, resourcesManager.font, "Time: 00:00", new TextOptions(HorizontalAlign.LEFT), vbom);
+		flagText = new Text(20, 420, resourceManager.font, "Flags: 0123456789", new TextOptions(HorizontalAlign.LEFT), vbom);
+        timeText = new Text(20, 370, resourceManager.font, "Time: 00:00", new TextOptions(HorizontalAlign.LEFT), vbom);
         flagText.setAnchorCenter(0, 0);
         timeText.setAnchorCenter(0, 0);
         flagText.setText("Flags: 0");
@@ -138,6 +138,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
         DebugRenderer debug = new DebugRenderer(physicsWorld, vbom);
         this.attachChild(debug);
         FIXTURE_DEF = PhysicsFactory.createFixtureDef(0, 0.01f, 0.5f);
+        FIXTURE_DEF.filter.categoryBits = 0x0001;
         
         registerUpdateHandler(new IUpdateHandler() {
         	
@@ -290,25 +291,25 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 
                 if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLATFORM1))
                 {
-                    levelObject = new Sprite(x, y, resourcesManager.platform1_region, vbom);
+                    levelObject = new Sprite(x, y, resourceManager.platform1_region, vbom);
                     PhysicsFactory.createBoxBody(physicsWorld, levelObject, BodyType.StaticBody, FIXTURE_DEF).setUserData("platform1");
                 } 
                 else if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_BLOCK))
                 {
-                    levelObject = new Sprite(x, y, resourcesManager.block_region, vbom);
+                    levelObject = new Sprite(x, y, resourceManager.block_region, vbom);
                     PhysicsFactory.createBoxBody(physicsWorld, levelObject, BodyType.StaticBody, FIXTURE_DEF).setUserData("block");
                 } 
                 else if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLATFORM2))
                 {
-                    levelObject = new Sprite(x, y, resourcesManager.platform2_region, vbom);
+                    levelObject = new Sprite(x, y, resourceManager.platform2_region, vbom);
                     final Body body = PhysicsFactory.createBoxBody(physicsWorld, levelObject, BodyType.StaticBody, FIXTURE_DEF);
                     body.setUserData("platform2");
                     physicsWorld.registerPhysicsConnector(new PhysicsConnector(levelObject, body, true, false));
                 }
                 else if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_SWITCH))
                 {
-                    levelObject = new Sprite(x, y, resourcesManager.switch_region, vbom);
-                    hiddenPlatformSprite = new Sprite(x+100, y+100, resourcesManager.platform3_region, vbom);
+                    levelObject = new Sprite(x, y, resourceManager.switch_region, vbom);
+                    hiddenPlatformSprite = new Sprite(x+100, y+100, resourceManager.platform3_region, vbom);
                     final Body body = PhysicsFactory.createBoxBody(physicsWorld, levelObject, BodyType.StaticBody, FIXTURE_DEF);
                     body.setUserData("switch");
                     physicsWorld.registerPhysicsConnector(new PhysicsConnector(levelObject, body, true, false));
@@ -316,7 +317,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 else if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_FLAG))
                 {
                 	numFlags++;
-                    levelObject = new Sprite(x, y, resourcesManager.flag_region, vbom)
+                    levelObject = new Sprite(x, y, resourceManager.flag_region, vbom)
                     {
                         @Override
                         protected void onManagedUpdate(float pSecondsElapsed) 
@@ -340,7 +341,23 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 {
                 	if (playerIndex < numPlayers)
                 	{
-                    	Player p = new Player(x, y, vbom, camera, physicsWorld, playerIndex)
+                    	Player p = new AverageJoe(x, y, vbom, camera, physicsWorld, playerIndex)
+                    	{
+                    		@Override
+                    		public void onDie()
+                    		{
+                    		    //getBody().setTransform(getStartPosition(), getBody().getAngle());
+                    		}
+                    	};
+                    	levelObject = p;
+                    	players[playerIndex++] = p;	
+                	}
+                }
+                else if (type.equals(TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_WIZARD))
+                {
+                	if (playerIndex < numPlayers)
+                	{
+                    	Player p = new Wizard(x, y, vbom, camera, physicsWorld, playerIndex)
                     	{
                     		@Override
                     		public void onDie()
@@ -488,7 +505,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     
     private void createCongratsText()
     {
-    	congratsText = new Text(activity.getScreenHalfWidth(), activity.getScreenHalfHeight(), resourcesManager.font, "Congratulations!", vbom);
+    	congratsText = new Text(activity.getScreenHalfWidth(), activity.getScreenHalfHeight(), resourceManager.font, "Congratulations!", vbom);
     }
 
     private void displayCongratsText()
@@ -512,7 +529,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 	private int minPlayers = 0;
     private Vector2 lastTouchCoords;
     private static int DRAG_DISTANCE = 50;
-    private static double MOVE_TOUCH_PERCENTAGE = .2;
+    private static double HORIZ_MOVE_TOUCH_PERCENTAGE = .2;
+    private static double VERT_MOVE_TOUCH_PERCENTAGE = .5;
     private boolean hasJumped = false;
     private Text congratsText;
     private boolean congratsDisplayed = false;
@@ -535,6 +553,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_SWITCH = "switch";
     private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_FLAG = "flag";
     private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_PLAYER = "player";
+    private static final Object TAG_ENTITY_ATTRIBUTE_TYPE_VALUE_WIZARD = "wizard";
     
     private static FixtureDef FIXTURE_DEF;
     
@@ -568,13 +587,16 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 			float y = pSceneTouchEvent.getY() - camera.getYMin();
 			int xdir = 0;
 			lastTouchCoords = new Vector2(x, y);
-			if (x < camera.getWidth()*MOVE_TOUCH_PERCENTAGE)
+			if (y < camera.getHeight()*VERT_MOVE_TOUCH_PERCENTAGE)
 			{
-				xdir = -1;
-			}
-			else if (x > camera.getWidth() - camera.getWidth()*MOVE_TOUCH_PERCENTAGE)
-			{
-				xdir = 1;
+				if (x < camera.getWidth()*HORIZ_MOVE_TOUCH_PERCENTAGE)
+				{
+					xdir = -1;
+				}
+				else if (x > camera.getWidth() - camera.getWidth()*HORIZ_MOVE_TOUCH_PERCENTAGE)
+				{
+					xdir = 1;
+				}
 			}
 			player.setRunDirection(xdir);
 			

@@ -26,13 +26,13 @@ import com.uacapstone.red.GameActivity;
  * @author www.matim-dev.com
  * @version 1.0
  */
-public class ResourcesManager
+public class ResourceManager
 {
     //---------------------------------------------
     // VARIABLES
     //---------------------------------------------
     
-    private static final ResourcesManager INSTANCE = new ResourcesManager();
+    private static final ResourceManager INSTANCE = new ResourceManager();
     
     public Engine engine;
     public GameActivity activity;
@@ -51,6 +51,8 @@ public class ResourcesManager
     public ITextureRegion invites_region;
     public ITextureRegion options_region;
     public ITiledTextureRegion player_region;
+    public ITiledTextureRegion wizard_region;
+    public ITiledTextureRegion tornado_region;
     
     private BitmapTextureAtlas splashTextureAtlas;
     private BuildableBitmapTextureAtlas menuTextureAtlas;
@@ -143,7 +145,9 @@ public class ResourcesManager
         platform3_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "platform3.png");
         switch_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "switch.png");
         flag_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "flag.png");
+        tornado_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "tornado.png", 2, 1);
         player_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "player.png", 3, 1);
+        wizard_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "wizard.png", 8, 1);
         
         try 
         {
@@ -215,7 +219,7 @@ public class ResourcesManager
     // GETTERS AND SETTERS
     //---------------------------------------------
     
-    public static ResourcesManager getInstance()
+    public static ResourceManager getInstance()
     {
         return INSTANCE;
     }

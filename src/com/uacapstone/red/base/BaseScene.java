@@ -9,7 +9,7 @@ import android.app.Activity;
 import android.util.DisplayMetrics;
 
 import com.uacapstone.red.GameActivity;
-import com.uacapstone.red.manager.ResourcesManager;
+import com.uacapstone.red.manager.ResourceManager;
 import com.uacapstone.red.manager.SceneManager.SceneType;
 
 /**
@@ -25,7 +25,7 @@ public abstract class BaseScene extends Scene
     
     protected Engine engine;
     protected GameActivity activity;
-    protected ResourcesManager resourcesManager;
+    protected ResourceManager resourceManager;
     protected VertexBufferObjectManager vbom;
     protected BoundCamera camera;
     
@@ -35,11 +35,11 @@ public abstract class BaseScene extends Scene
     
     public BaseScene()
     {
-        this.resourcesManager = ResourcesManager.getInstance();
-        this.engine = resourcesManager.engine;
-        this.activity = resourcesManager.activity;
-        this.vbom = resourcesManager.vbom;
-        this.camera = resourcesManager.camera;
+        this.resourceManager = ResourceManager.getInstance();
+        this.engine = resourceManager.engine;
+        this.activity = resourceManager.activity;
+        this.vbom = resourceManager.vbom;
+        this.camera = resourceManager.camera;
         createScene();
     }
     

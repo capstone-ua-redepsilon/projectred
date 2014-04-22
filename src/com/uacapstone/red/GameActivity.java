@@ -40,7 +40,7 @@ import com.google.android.gms.games.multiplayer.realtime.RoomConfig;
 import com.google.android.gms.games.multiplayer.realtime.RoomStatusUpdateListener;
 import com.google.android.gms.games.multiplayer.realtime.RoomUpdateListener;
 import com.google.example.games.basegameutils.GoogleBaseGameActivity;
-import com.uacapstone.red.manager.ResourcesManager;
+import com.uacapstone.red.manager.ResourceManager;
 import com.uacapstone.red.manager.SceneManager;
 import com.uacapstone.red.networking.NetworkingConstants;
 import com.uacapstone.red.networking.NetworkingConstants.MessageFlags;
@@ -95,7 +95,7 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
     Map<String, Integer> mParticipantScore = new HashMap<String, Integer>();
 	
 	private BoundCamera camera;
-	private ResourcesManager resourcesManager;
+	private ResourceManager resourceManager;
     
 	public EngineOptions onCreateEngineOptions()
 	{
@@ -115,8 +115,8 @@ public class GameActivity extends GoogleBaseGameActivity implements RoomUpdateLi
 
     public void onCreateResources(OnCreateResourcesCallback pOnCreateResourcesCallback) throws IOException
     {
-    	ResourcesManager.prepareManager(mEngine, this, camera, getVertexBufferObjectManager());
-    	resourcesManager = ResourcesManager.getInstance();
+    	ResourceManager.prepareManager(mEngine, this, camera, getVertexBufferObjectManager());
+    	resourceManager = ResourceManager.getInstance();
     	pOnCreateResourcesCallback.onCreateResourcesFinished();
     }
 

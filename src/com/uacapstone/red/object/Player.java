@@ -5,6 +5,7 @@ import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.extension.physics.box2d.PhysicsConnector;
 import org.andengine.extension.physics.box2d.PhysicsFactory;
 import org.andengine.extension.physics.box2d.PhysicsWorld;
+import org.andengine.opengl.texture.region.ITiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
 import com.badlogic.gdx.math.Vector2;
@@ -13,7 +14,7 @@ import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
-import com.uacapstone.red.manager.ResourcesManager;
+import com.uacapstone.red.manager.ResourceManager;
 
 /**
  * @author Mateusz Mysliwiec
@@ -26,31 +27,45 @@ public abstract class Player extends AnimatedSprite
     // CONSTRUCTOR
     // ---------------------------------------------
     
-    public Player(float pX, float pY, VertexBufferObjectManager vbo, Camera camera, PhysicsWorld physicsWorld, int id)
+    public Player(float pX, float pY, VertexBufferObjectManager vbom, Camera camera, PhysicsWorld physicsWorld, ITiledTextureRegion region, int id)
     {
-        super(pX, pY, ResourcesManager.getInstance().player_region, vbo);
+        super(pX, pY, region, vbom);
+        mVbom = vbom;
+        mCamera = camera;
     	mId = id;
-        createPhysics(camera, physicsWorld);
+    	mPhysicsWorld = physicsWorld;
+        createPhysics();
+        setupHud();
     }
     
     // ---------------------------------------------
     // VARIABLES
     // ---------------------------------------------
 	     
-    private int mId;
-    private Body body;
-    private Fixture feet;
-    private float velocity = 0;
-    private int runDirection = 0;
-    private float speed = 5;
-    private int footContacts = 0;
-    private Vector2 startPosition;
-	private boolean mHasJumped;
+    protected int mId;
+    protected FixtureDef mFixtureDef;
+    protected VertexBufferObjectManager mVbom;
+    protected PhysicsWorld mPhysicsWorld;
+    protected Camera mCamera;
+    protected Body body;
+    protected Fixture feet;
+    protected float velocity = 0;
+    protected int runDirection = 0;
+    protected float speed = 5;
+    protected int footContacts = 0;
+    protected Vector2 startPosition;
+    protected boolean mHasJumped;
 
     // ---------------------------------------------
     // LOGIC
     // ---------------------------------------------
-    
+
+    protected abstract void animateRun(float direction);
+    protected abstract void animateJump(float direction);
+    protected abstract void animateLand(float direction);
+    protected abstract void animateFall(float direction);
+    protected abstract void setupHud();
+    protected abstract void setupPhysics();
     public abstract void onDie();
     
     /**
@@ -91,23 +106,6 @@ public abstract class Player extends AnimatedSprite
     	return startPosition;
     }
     
-    private void animateRun(float direction)
-    {
-        final long[] PLAYER_ANIMATE = new long[] { 100, 100, 100 };
-        if (direction != 0)
-        {
-        	setScaleX(direction);
-        	if (isOnGround())
-        	{
-        		animate(PLAYER_ANIMATE, 0, 2, true);
-        	}
-        }
-        else
-        {
-        	stopAnimation();
-        }
-    }
-    
     public boolean isRunning()
     {
     	return runDirection != 0;
@@ -117,9 +115,10 @@ public abstract class Player extends AnimatedSprite
     {
         if (!mHasJumped && isOnGround()) 
         {
+        	mHasJumped = true;
         	body.setLinearVelocity(new Vector2(body.getLinearVelocity().x, 12)); 
     	
-        	stopAnimation();
+        	animateJump(runDirection);
     	}
     }
     
@@ -130,6 +129,7 @@ public abstract class Player extends AnimatedSprite
     	if (runDirection == 0)
     	{
     		velocity = 0;
+        	animateLand(runDirection);
     	}
     	else
     	{
@@ -154,20 +154,23 @@ public abstract class Player extends AnimatedSprite
     public void decreaseFootContacts()
     {
         footContacts--;
-        if (footContacts == 0)
+        if (footContacts == 0 && !mHasJumped)
         {
-        	stopAnimation();
+        	animateFall(runDirection);
         }
     }
     
-    private void createPhysics(final Camera camera, PhysicsWorld physicsWorld)
+    private void createPhysics()
     {        
-        body = PhysicsFactory.createBoxBody(physicsWorld, this, BodyType.DynamicBody, PhysicsFactory.createFixtureDef(0, 0, 0));
+    	mFixtureDef = PhysicsFactory.createFixtureDef(0, 0, 0);
+    	mFixtureDef.filter.categoryBits = 0x0002;
+    	mFixtureDef.filter.maskBits = ~0x0002;
+        body = PhysicsFactory.createBoxBody(mPhysicsWorld, this, BodyType.DynamicBody, mFixtureDef);
         
         final PolygonShape mPoly = new PolygonShape();
-        mPoly.setAsBox(8.0f/PhysicsConnector.PIXEL_TO_METER_RATIO_DEFAULT,
+        mPoly.setAsBox((mWidth/2-1)/PhysicsConnector.PIXEL_TO_METER_RATIO_DEFAULT,
         		0.5f/PhysicsConnector.PIXEL_TO_METER_RATIO_DEFAULT,
-        		new Vector2(0,-16/PhysicsConnector.PIXEL_TO_METER_RATIO_DEFAULT),
+        		new Vector2(0,-(mHeight/2)/PhysicsConnector.PIXEL_TO_METER_RATIO_DEFAULT),
         		0); //The size of the character is 32x32
         final FixtureDef pFixtureDef = PhysicsFactory.createFixtureDef(0f,0f,0f,true);
         pFixtureDef.shape = mPoly;
@@ -178,13 +181,13 @@ public abstract class Player extends AnimatedSprite
         body.setUserData(new PlayerData(mId, "player"));
         body.setFixedRotation(true);
         
-        physicsWorld.registerPhysicsConnector(new PhysicsConnector(this, body, true, false)
+        mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(this, body, true, false)
         {
             @Override
             public void onUpdate(float pSecondsElapsed)
             {
                 super.onUpdate(pSecondsElapsed);
-                camera.onUpdate(0.1f);
+                mCamera.onUpdate(0.1f);
                 
                 if (getY() <= 0)
                 {                    
@@ -195,6 +198,7 @@ public abstract class Player extends AnimatedSprite
             }
         });
         startPosition = new Vector2(body.getPosition());
+        setupPhysics();
     }
 
 	public void setHasjumped(boolean hasJumped) {
