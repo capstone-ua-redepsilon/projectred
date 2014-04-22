@@ -14,6 +14,7 @@ import org.andengine.entity.modifier.ScaleModifier;
 import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
+import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.Text;
 import org.andengine.entity.text.TextOptions;
@@ -196,18 +197,23 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     	NetworkMessage msgToSend = null;
     	
     	// State updates for other entities (abilities)
-    	if (this.avatar.getClass() == Wizard.class)
+    	if (Wizard.class.isInstance(this.avatar) )
     	{
+    		Wizard w = (Wizard)this.avatar;
     		WizardPlayerStateMessage stateMessage = new WizardPlayerStateMessage();
     		
     		WizardPlayerState wizardState = new WizardPlayerState();
     		wizardState.playerState = genericState;
+    		if (w.mDidJustCastTornado) {
+    			wizardState.didCastTornado = w.mDidJustCastTornado;
+    			w.mDidJustCastTornado = false;
+    		}
     		
     		stateMessage.state = wizardState;
     		
     		msgToSend = stateMessage;
     	}
-    	else if (this.avatar.getClass() == Joe.class)
+    	else if (Joe.class.isInstance(this.avatar) )
     	{
     		PlayerStateMessage stateMessage = new PlayerStateMessage();
     		stateMessage.state = genericState;
@@ -426,23 +432,24 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
             {
                 final Fixture x1 = contact.getFixtureA();
                 final Fixture x2 = contact.getFixtureB();
-                AvatarData pd1, pd2, pd = null;
+                AvatarData pd1, pd2, pd = null, bd1, bd2 ;
                 Fixture ft = null;
                 Fixture o = null;
 
                 if (x1.getUserData() != null && x1.getUserData() instanceof AvatarData)
                 {
                 	pd1 = (AvatarData)x1.getUserData();
+                	bd1 = (AvatarData)x1.getBody().getUserData();
                 	if (pd1.mDescription == "feet")
                 	{
                 		pd = pd1;
                     	ft = x1;
                     	o = x2;
                 	}
-                	else if (pd1.mDescription.equals("tornado"))
+                	else if (bd1.mDescription.equals("tornado"))
                 	{
                 		x2.getBody().applyForce(TornadoForce, x1.getBody().getPosition());
-                		final AvatarData pdata = pd1;
+                		final AvatarData pdata = bd1;
                 		physicsWorld.postRunnable(new Runnable() {
 							@Override
 							public void run() {
@@ -460,16 +467,17 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 else if (x2.getUserData() != null && x2.getUserData() instanceof AvatarData)
                 {
                 	pd2 = (AvatarData)x2.getUserData();
+                	bd2 = (AvatarData)x2.getBody().getUserData();
                 	if (pd2.mDescription == "feet")
                 	{
                 		pd = pd2;
                     	ft = x2;
                     	o = x1;
                 	}
-                	else if (pd2.mDescription.equals("tornado"))
+                	else if (bd2.mDescription.equals("tornado"))
                 	{
                 		x1.getBody().applyForce(TornadoForce, x1.getBody().getPosition());
-                		final AvatarData pdata = pd2;
+                		final AvatarData pdata = bd2;
                 		physicsWorld.postRunnable(new Runnable() {
 							@Override
 							public void run() {
@@ -728,13 +736,53 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 	void handleWizardPlayerStateMessage(WizardPlayerStateMessage message) {
 		
 		// handle wizard thingies
+		for (Avatar p: this.avatars) {
+			if (p.getId() == message.state.playerState.id) {
+				message.state.apply((Wizard)p);
+			}
+		}
 		
-		
-		// handle player thingies
-		PlayerStateMessage fakeMessage = new PlayerStateMessage();
-		fakeMessage.state = message.state.playerState;
-		handlePlayerStateMessage(fakeMessage);
-		
+	}
+	
+	public void createTornado(int playerId, float x, float y, int speed, long duration, final Runnable onComplete) {
+		final AnimatedSprite tornado = new AnimatedSprite(x, y, resourceManager.tornado_region, vbom);
+    	tornado.animate(100);
+    	FixtureDef fixtureDef = PhysicsFactory.createFixtureDef(0, 0, 0);
+    	fixtureDef.filter.maskBits = 0x0004;
+    	final Body tornadoBody = PhysicsFactory.createBoxBody(this.physicsWorld, tornado, BodyType.KinematicBody, fixtureDef);
+        this.attachChild(tornado);
+    	tornadoBody.setUserData(new AvatarData(playerId, "tornado", tornado));
+    	tornadoBody.setFixedRotation(true);
+    	tornadoBody.setLinearVelocity(new Vector2(0, 6));
+    	
+    	final PhysicsConnector physConn = new PhysicsConnector(tornado, tornadoBody, true, false)
+        {
+            @Override
+            public void onUpdate(float pSecondsElapsed)
+            {
+                super.onUpdate(pSecondsElapsed);
+            }
+        };
+        physicsWorld.registerPhysicsConnector(physConn);
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask()
+        {
+        	@Override
+        	public void run()
+        	{
+        		physicsWorld.postRunnable(new Runnable()
+        		{
+        			public void run()
+        			{
+        				GameScene.this.physicsWorld.unregisterPhysicsConnector(physConn);
+        				GameScene.this.physicsWorld.destroyBody(tornadoBody);
+        				GameScene.this.detachChild(tornado);
+        			}
+        		});
+        		
+        		onComplete.run();
+        	}
+        }, duration);
 	}
 	
 //	public final LinkedList<NetworkMessage> unconfirmedMessages = new LinkedList<NetworkMessage>();
@@ -747,6 +795,12 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 			if (new Date(message.timestamp).after(mLastGameStateMessageReceived)) {
 				mLastGameStateMessageReceived.setTime(message.timestamp);
 				handleMessage(NetworkingConstants.messagePackInstance.read(message.messageBytes, PlayerStateMessage.class));
+			}
+			break;
+		case MessageFlags.MESSAGE_WIZARD_PLAYER_STATE:
+			if (new Date(message.timestamp).after(mLastGameStateMessageReceived)) {
+				mLastGameStateMessageReceived.setTime(message.timestamp);
+				handleMessage(NetworkingConstants.messagePackInstance.read(message.messageBytes, WizardPlayerStateMessage.class));
 			}
 			break;
 //		case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_DIRECTION:
@@ -774,6 +828,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 //			break;
 		case MessageFlags.MESSAGE_FROM_SERVER_PLAYER_STATE:
 			handlePlayerStateMessage((PlayerStateMessage)message);
+			break;
+		case MessageFlags.MESSAGE_WIZARD_PLAYER_STATE:
+			handleWizardPlayerStateMessage((WizardPlayerStateMessage)message);
 			break;
 		}
 	}

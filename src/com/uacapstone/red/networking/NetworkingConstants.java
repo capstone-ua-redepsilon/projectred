@@ -18,6 +18,7 @@ public class NetworkingConstants
 		public static final short MESSAGE_FROM_SERVER_PLAYER_STATE = 3;
 		public static final short MESSAGE_SET_HOST = 4;
 		public static final short MESSAGE_SCORE = 5;
+		public static final short MESSAGE_WIZARD_PLAYER_STATE = 6;
 		
 	}
 }

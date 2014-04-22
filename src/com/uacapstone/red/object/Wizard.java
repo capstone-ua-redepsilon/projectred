@@ -1,8 +1,5 @@
 package com.uacapstone.red.object;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.camera.hud.HUD;
 import org.andengine.entity.scene.menu.MenuScene;
@@ -10,16 +7,9 @@ import org.andengine.entity.scene.menu.MenuScene.IOnMenuItemClickListener;
 import org.andengine.entity.scene.menu.item.AnimatedSpriteMenuItem;
 import org.andengine.entity.scene.menu.item.IMenuItem;
 import org.andengine.entity.scene.menu.item.decorator.ScaleMenuItemDecorator;
-import org.andengine.entity.sprite.AnimatedSprite;
-import org.andengine.extension.physics.box2d.PhysicsConnector;
-import org.andengine.extension.physics.box2d.PhysicsFactory;
 import org.andengine.extension.physics.box2d.PhysicsWorld;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.Body;
-import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
-import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.uacapstone.red.manager.ResourceManager;
 import com.uacapstone.red.manager.SceneManager;
 import com.uacapstone.red.scene.GameScene;
@@ -45,6 +35,7 @@ public abstract class Wizard extends Avatar
     // VARIABLES
     // ---------------------------------------------
 	
+    public boolean mDidJustCastTornado = false;
 
     // ---------------------------------------------
     // LOGIC
@@ -115,7 +106,7 @@ public abstract class Wizard extends Avatar
     	        switch(pMenuItem.getID())
     	        {
     	        case 0:
-    	        	wizard.tryCastTornado();
+    	        	wizard.castTornado(true);
     	        	return true;
     	        default:
     	            return false;
@@ -130,57 +121,21 @@ public abstract class Wizard extends Avatar
     	hud.setChildScene(menuScene);
     }
     
-    public boolean tryCastTornado()
-    {
-    	boolean result = mCanCast;
-    	if (mCanCast)
-    		castTornado();
-    	return result;
-    }
-    
-    private void castTornado()
-    {
-    	mCanCast = false;
-    	animateCast();
-    	final ResourceManager resourceManager = ResourceManager.getInstance();
-        final GameScene gameScene = SceneManager.getInstance().getGameScene();
-    	final AnimatedSprite tornado = new AnimatedSprite(mX, mY, resourceManager.tornado_region, mVbom);
-    	tornado.animate(100);
-    	FixtureDef fixtureDef = PhysicsFactory.createFixtureDef(0, 0, 0);
-    	fixtureDef.filter.maskBits = 0x0004;
-    	final Body tornadoBody = PhysicsFactory.createBoxBody(mPhysicsWorld, tornado, BodyType.KinematicBody, fixtureDef);
-        gameScene.attachChild(tornado);
-    	tornadoBody.setUserData(new AvatarData(mId, "tornado", tornado));
-    	tornadoBody.setFixedRotation(true);
-    	tornadoBody.setLinearVelocity(new Vector2(0, 6));
-        
-    	final PhysicsConnector physConn = new PhysicsConnector(tornado, tornadoBody, true, false)
-        {
-            @Override
-            public void onUpdate(float pSecondsElapsed)
-            {
-                super.onUpdate(pSecondsElapsed);
-            }
-        };
-        mPhysicsWorld.registerPhysicsConnector(physConn);
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask()
-        {
-        	@Override
-        	public void run()
-        	{
-        		mPhysicsWorld.postRunnable(new Runnable()
-        		{
-        			public void run()
-        			{
-        				mPhysicsWorld.unregisterPhysicsConnector(physConn);
-        				mPhysicsWorld.destroyBody(tornadoBody);
-        				gameScene.detachChild(tornado);
-        			}
-        		});
-        		mCanCast = true;
-        	}
-        }, CastCooldownInMilliseconds);
+    public void castTornado(boolean shouldCheckConditions) {
+    	if (!shouldCheckConditions || mCanCast) {
+    		mDidJustCastTornado = true;
+    		mCanCast = false;
+        	animateCast();
+            final GameScene gameScene = SceneManager.getInstance().getGameScene();
+            
+            gameScene.createTornado(mId, mX, mY, 6, CastCooldownInMilliseconds, new Runnable() {
+            	@Override
+            	public void run()
+            	{
+            		mCanCast = true;
+            	}
+            });
+    	}
     }
     
     private static final int CastCooldownInMilliseconds = 3000;

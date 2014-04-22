@@ -19,6 +19,6 @@ public class WizardPlayerStateMessage extends NetworkMessage {
 	@Override
 	public short getFlag() {
 		// TODO Auto-generated method stub
-		return NetworkingConstants.MessageFlags.MESSAGE_FROM_SERVER_PLAYER_STATE;
+		return NetworkingConstants.MessageFlags.MESSAGE_WIZARD_PLAYER_STATE;
 	}
 }

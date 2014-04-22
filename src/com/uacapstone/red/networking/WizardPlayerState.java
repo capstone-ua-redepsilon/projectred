@@ -9,9 +9,7 @@ public class WizardPlayerState implements IState<Wizard> {
 	
 	public PlayerState playerState;
 	
-//	public boolean canCastTornado;
-	
-//	public PhysicsBodyState tornadoState;
+	public boolean didCastTornado;
 	
 	public WizardPlayerState() {
 		
@@ -21,6 +19,9 @@ public class WizardPlayerState implements IState<Wizard> {
 	public void apply(Wizard o) {
 		playerState.apply(o);
 		
+		if (didCastTornado) {
+			o.castTornado(false);
+		}
 		// TODO Auto-generated method stub
 		
 	}
