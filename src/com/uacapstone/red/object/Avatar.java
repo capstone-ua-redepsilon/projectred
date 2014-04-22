@@ -110,9 +110,9 @@ public abstract class Avatar extends AnimatedSprite
     	return runDirection != 0;
     }
     
-    public void jump()
+    public void jump(boolean checkConditions)
     {
-        if (!mHasJumped && isOnGround()) 
+        if (!checkConditions || !mHasJumped && isOnGround()) 
         {
         	mHasJumped = true;
         	body.setLinearVelocity(new Vector2(body.getLinearVelocity().x, 12)); 
@@ -121,7 +121,7 @@ public abstract class Avatar extends AnimatedSprite
     	}
     }
     
-    public void land()
+    public void land(boolean checkConditions)
     {
     	mHasJumped = false;
     	
@@ -146,7 +146,7 @@ public abstract class Avatar extends AnimatedSprite
         footContacts++;
         if (footContacts == 1)
         {
-        	land();
+        	land(true);
         }
     }
 

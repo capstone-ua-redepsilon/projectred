@@ -690,7 +690,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 			Vector2 displacement = currentCoords.sub(lastTouchCoords);
 			
 			if (Math.abs(displacement.y) > DRAG_DISTANCE) {
-				avatar.jump();
+				avatar.jump(true);
 				sendGameStateUpdate();
 			}
 		}

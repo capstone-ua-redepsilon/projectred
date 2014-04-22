@@ -21,11 +21,19 @@ public class PlayerState implements IState<Avatar> {
 
 	@Override
 	public void apply(Avatar o) {
-		bodyState.apply(o.getBody());
+		
 		o.setRunDirection(direction);
 		o.setNumberOfFeetDown(playerFeetDown);
-		o.setHasjumped(hasJumped);
+		if (o.getHasJumped() == false && hasJumped == true) {
+			o.jump(false);
+		}
+		if (o.getHasJumped() == true && hasJumped == false) {
+			o.land(false);
+		}
+		
 		if (stopAnimation)
 			o.stopAnimation();
+		
+		bodyState.apply(o.getBody());
 	}
 }
