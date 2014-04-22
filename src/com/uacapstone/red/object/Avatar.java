@@ -173,6 +173,8 @@ public abstract class Avatar extends AnimatedSprite
         		0); //The size of the character is 32x32
         final FixtureDef pFixtureDef = PhysicsFactory.createFixtureDef(0f,0f,0f,true);
         pFixtureDef.shape = mPoly;
+        pFixtureDef.filter.categoryBits = 0x0002;
+        pFixtureDef.filter.maskBits = ~0x0002;
         feet=body.createFixture(pFixtureDef);
         feet.setUserData(new AvatarData(mId, "feet"));
         mPoly.dispose();

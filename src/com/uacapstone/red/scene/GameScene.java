@@ -97,9 +97,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     @Override
     public void disposeScene()
     {
-    	resetCamera();
         
     	activity.leaveRoom();
+    	resetCamera();
 
         // TODO code responsible for disposing scene
         // removing all game scene objects.
@@ -486,7 +486,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 }
             	if (ft != null && pd != null)
             	{
-                    avatars[Integer.parseInt(pd.mId)].increaseFootContacts();
+            		if ((ft.getFilterData().maskBits & o.getFilterData().categoryBits) == o.getFilterData().categoryBits)
+            		{
+            			avatars[Integer.parseInt(pd.mId)].increaseFootContacts();
+            		}
                     if (o.getBody().getUserData() != null && o.getBody().getUserData().equals("switch"))
                     {
                     	mNumPlayersOnSwitch++;
