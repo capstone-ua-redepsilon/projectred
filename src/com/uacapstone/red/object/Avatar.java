@@ -35,7 +35,6 @@ public abstract class Avatar extends AnimatedSprite
     	mId = id;
     	mPhysicsWorld = physicsWorld;
         createPhysics();
-        setupHud();
     }
     
     // ---------------------------------------------
