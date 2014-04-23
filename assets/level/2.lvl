@@ -15,16 +15,6 @@
     <entity x="900" y="32" type="block"/>
     <entity x="964" y="32" type="block"/>
     
-    <entity x="132" y="480" type="block"/>
-    <entity x="196" y="480" type="block"/>
-    <entity x="260" y="480" type="block"/>
-    <entity x="324" y="480" type="block"/>
-    <entity x="388" y="480" type="block"/>
-    <entity x="452" y="480" type="block"/>
-    <entity x="516" y="480" type="block"/>
-    <entity x="580" y="480" type="block"/>
-    <entity x="644" y="480" type="block"/>
-    
     <entity x="132" y="224" type="block"/>
     <entity x="196" y="224" type="block"/>
     
@@ -38,18 +28,37 @@
     
     <entity x="68" y="96" type="block"/>
     <entity x="68" y="160" type="block"/>
-    <entity x="68" y="224" type="block"/>
     <entity x="68" y="288" type="block"/>
+    <entity x="68" y="352" type="block"/>
+    <entity x="68" y="416" type="block"/>
+    <entity x="68" y="480" type="block"/>
+    <entity x="68" y="544" type="block"/>
+    <entity x="68" y="608" type="block"/>
     
     <entity x="708" y="224" type="block"/>
-    <entity x="708" y="352" type="block"/>
+    <entity x="708" y="288" type="block"/>
     <entity x="708" y="416" type="block"/>
     <entity x="708" y="480" type="block"/>
+    <entity x="708" y="544" type="block"/>
+    <entity x="708" y="608" type="block"/>
     
-    <entity x="580" y="288" type="block"/>
-    <entity x="644" y="288" type="block"/>
+    <entity x="132" y="672" type="block"/>
+    <entity x="196" y="672" type="block"/>
+    <entity x="260" y="672" type="block"/>
+    <entity x="324" y="672" type="block"/>
+    <entity x="388" y="672" type="block"/>
+    <entity x="452" y="672" type="block"/>
+    <entity x="516" y="672" type="block"/>
+    <entity x="580" y="672" type="block"/>
+    <entity x="644" y="672" type="block"/>
+    
+    <entity x="580" y="352" type="block"/>
+    <entity x="644" y="352" type="block"/>
     
     <entity x="964" y="96" type="flag" />
+    <entity x="644" y="416" type="flag" />
+    <entity x="132" y="288" type="flag" />
+    
     <entity x="100" y="104" type="rabbit" />
     <entity x="164" y="104" type="wizard" />
     <entity x="228" y="104" type="joe" />

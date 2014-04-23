@@ -109,7 +109,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     
     private void createBackground()
     {
-        setBackground(new Background(Color.BLUE));
+        setBackground(new Background(.68f, .89f, 1.0f));
     }
     
     private void quit()
@@ -451,23 +451,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                     	ft = x1;
                     	o = x2;
                 	}
-                	else if (bd1.mDescription.compareTo("tornado") == 0)
-                	{
-                		x2.getBody().applyForce(TornadoForce, x1.getBody().getPosition());
-                		final AvatarData pdata = bd1;
-                		physicsWorld.postRunnable(new Runnable() {
-							@Override
-							public void run() {
-								if (pdata != null)
-								{
-									pdata.mSprite.setVisible(false);
-								}
-								Filter filter = new Filter();
-								filter.maskBits = 0;
-								x1.setFilterData(filter);
-							}
-                		});
-                	}
                 }
                 else if (x2.getUserData() != null && x2.getUserData() instanceof AvatarData)
                 {
@@ -482,23 +465,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 		pd = pd2;
                     	ft = x2;
                     	o = x1;
-                	}
-                	else if (bd2.mDescription.compareTo("tornado") == 0)
-                	{
-                		x1.getBody().applyForce(TornadoForce, x1.getBody().getPosition());
-                		final AvatarData pdata = bd2;
-                		physicsWorld.postRunnable(new Runnable() {
-							@Override
-							public void run() {
-								if (pdata != null)
-								{
-									pdata.mSprite.setVisible(false);
-								}
-								Filter filter = new Filter();
-								filter.maskBits = 0;
-								x2.setFilterData(filter);
-							}
-                		});
                 	}
                 }
             	if (ft != null && pd != null)
@@ -760,8 +726,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 		final AnimatedSprite tornado = new AnimatedSprite(x, y, resourceManager.tornado_region, vbom);
     	tornado.animate(100);
     	FixtureDef fixtureDef = PhysicsFactory.createFixtureDef(0, 0, 0);
-    	fixtureDef.filter.categoryBits = 0x0004;
-    	fixtureDef.filter.maskBits = ~0x0002;
+    	//fixtureDef.filter.categoryBits = 0x0004;
+    	//fixtureDef.filter.maskBits = ~0x0002;
     	final Body tornadoBody = PhysicsFactory.createBoxBody(this.physicsWorld, tornado, BodyType.KinematicBody, fixtureDef);
         this.attachChild(tornado);
     	tornadoBody.setUserData(new AvatarData(playerId, "tornado", tornado));
