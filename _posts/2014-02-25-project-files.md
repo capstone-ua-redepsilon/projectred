@@ -19,7 +19,7 @@ Game art from opengameart.org [here](http://opengameart.org/content/sorlo-ultima
 [Design]({{ site.url }}/projectred/assets/documents/design.pdf)
 
 #Presentations
-[Concept]({{ site.url }}/projectred/assets/documents/Concept.pptx)
+[Concept]({{ site.url }}/projectred/assets/documents/concept.pptx)
 
 [Requirements]({{ site.url }}/projectred/assets/documents/requirements.pptx)
 
