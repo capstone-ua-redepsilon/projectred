@@ -9,6 +9,8 @@ Download the .apk [here]({{ site.url }}/projectred/assets/red.apk)
 
 Source code is available on [GitHub](https://github.com/capstone-ua-redepsilon/projectred)
 
+Game art from opengameart.org [here](http://opengameart.org/content/sorlo-ultimate-smash-friends) and [here](http://opengameart.org/content/surge-of-opensurge-for-ultimate-smash-friends)
+
 #Documents
 [Requirements]({{ site.url }}/projectred/assets/documents/requirements.pdf)
 
