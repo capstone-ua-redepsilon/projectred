@@ -21,7 +21,14 @@ public abstract class Rabbit extends Avatar
     {
         super(pX, pY, vbo, camera, physicsWorld, ResourceManager.getInstance().rabbit_region, id);
         speed = 8;
-        mFixtureDef.filter.maskBits |= 0x0004;
+    }
+    
+    @Override
+    protected void setupPhysics() {
+    	super.setupPhysics();
+    	mFixtureDef.filter.groupIndex = 1;
+    	mFixtureDef.filter.categoryBits |= 0x0003;
+    	mFixtureDef.filter.maskBits |= 0x0004;
     }
     
     // ---------------------------------------------
@@ -71,12 +78,6 @@ public abstract class Rabbit extends Avatar
     {
         stopAnimation();
         setCurrentTileIndex(1);
-    }
-    
-    @Override
-    protected void setupPhysics()
-    {
-    	
     }
     
     @Override

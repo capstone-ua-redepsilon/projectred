@@ -32,6 +32,11 @@ public abstract class Wizard extends Avatar
 //        mFixtureDef.filter.maskBits = 0x0004;
     }
     
+    @Override
+    protected void setupPhysics() {
+    	super.setupPhysics();
+    }
+    
     // ---------------------------------------------
     // VARIABLES
     // ---------------------------------------------
@@ -87,11 +92,6 @@ public abstract class Wizard extends Avatar
     	// TODO
     }
     
-    @Override
-    protected void setupPhysics()
-    {
-    	
-    }
     
     @Override
     public void setupHud()

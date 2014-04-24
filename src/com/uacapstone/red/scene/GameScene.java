@@ -1,7 +1,6 @@
 package com.uacapstone.red.scene;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -14,7 +13,6 @@ import org.andengine.entity.modifier.ScaleModifier;
 import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
-import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.Text;
 import org.andengine.entity.text.TextOptions;
@@ -26,7 +24,6 @@ import org.andengine.input.touch.TouchEvent;
 import org.andengine.util.SAXUtils;
 import org.andengine.util.adt.align.HorizontalAlign;
 import org.andengine.util.adt.color.Color;
-import org.andengine.util.debug.Debug;
 import org.andengine.util.level.EntityLoader;
 import org.andengine.util.level.constants.LevelConstants;
 import org.andengine.util.level.simple.SimpleLevelEntityLoaderData;
@@ -41,7 +38,6 @@ import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.physics.box2d.Contact;
 import com.badlogic.gdx.physics.box2d.ContactImpulse;
 import com.badlogic.gdx.physics.box2d.ContactListener;
-import com.badlogic.gdx.physics.box2d.Filter;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.Manifold;
@@ -55,14 +51,17 @@ import com.uacapstone.red.networking.PlayerState;
 import com.uacapstone.red.networking.WizardPlayerState;
 import com.uacapstone.red.networking.messaging.FlaggedNetworkMessage;
 import com.uacapstone.red.networking.messaging.NetworkMessage;
-import com.uacapstone.red.networking.messaging.PlayerChangeDirectionMessage;
-import com.uacapstone.red.networking.messaging.PlayerJumpMessage;
-import com.uacapstone.red.object.Joe;
-import com.uacapstone.red.object.Avatar;
-import com.uacapstone.red.object.AvatarData;
 import com.uacapstone.red.networking.messaging.PlayerStateMessage;
 import com.uacapstone.red.networking.messaging.WizardPlayerStateMessage;
+import com.uacapstone.red.object.Avatar;
+import com.uacapstone.red.object.AvatarData;
+import com.uacapstone.red.object.CollisionData;
+import com.uacapstone.red.object.FeetData;
+import com.uacapstone.red.object.ICollisionTarget;
+import com.uacapstone.red.object.Joe;
 import com.uacapstone.red.object.Rabbit;
+import com.uacapstone.red.object.Tornado;
+import com.uacapstone.red.object.UserData;
 import com.uacapstone.red.object.Wizard;
 //github.com/capstone-ua-redepsilon/projectred.git
 
@@ -198,7 +197,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     	NetworkMessage msgToSend = null;
     	
     	// State updates for other entities (abilities)
-    	if (Wizard.class.isInstance(this.avatar) )
+    	if (this.avatar instanceof Wizard )
     	{
     		Wizard w = (Wizard)this.avatar;
     		WizardPlayerStateMessage stateMessage = new WizardPlayerStateMessage();
@@ -211,13 +210,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     		}
     		
     		stateMessage.state = wizardState;
-    		
-    		msgToSend = stateMessage;
-    	}
-    	else if (Joe.class.isInstance(this.avatar) )
-    	{
-    		PlayerStateMessage stateMessage = new PlayerStateMessage();
-    		stateMessage.state = genericState;
     		
     		msgToSend = stateMessage;
     	}
@@ -391,16 +383,32 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
                 {
                 	if (playerIndex < numPlayers)
                 	{
-                    	Avatar p = new Rabbit(x, y, vbom, camera, physicsWorld, playerIndex)
+                    	Rabbit p = new Rabbit(x, y, vbom, camera, physicsWorld, playerIndex)
                     	{
                     		@Override
-                    		public void onDie()
-                    		{
-                    		    //getBody().setTransform(getStartPosition(), getBody().getAngle());
+                    		public void onDie() {
+                    			
                     		}
+
+							@Override
+							public void collideOther(ICollisionTarget target) {
+								super.collideOther(target);
+								if (target instanceof Tornado) {
+									mPhysicsWorld.postRunnable(new Runnable() {
+										@Override
+										public void run() {
+											getBody().applyLinearImpulse(TornadoForce, getBody().getPosition());
+										}
+									});
+								}
+							}
+                    		
+                    		
                     	};
                     	levelObject = p;
                     	avatars[playerIndex++] = p;	
+                    	
+                    	p.getBody().setUserData(new AvatarData(new CollisionData(p, p.getBody(), "rabbit")));
                 	}
                 }
                 else
@@ -429,155 +437,70 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     {
         ContactListener contactListener = new ContactListener()
         {
+        	private CollisionData getCollisionDataFromUserData(UserData u) {
+        		if (u.getClass() == AvatarData.class) {
+        			return ((AvatarData)u).mCollisionData;
+        		} else if (u.getClass() == CollisionData.class) {
+        			return (CollisionData)u;
+        		}
+        		
+        		return null;
+        	}
+        	
+        	private Fixture testFeet(Fixture f) {
+        		if (f.getUserData() != null && f.getUserData() instanceof FeetData) {
+                	return f;
+                }
+        		return null;
+        	}
+        	
             public void beginContact(Contact contact)
             {
                 final Fixture x1 = contact.getFixtureA();
                 final Fixture x2 = contact.getFixtureB();
-                AvatarData pd1, pd2, pd = null, bd1, bd2 ;
-                Fixture ft = null;
-                Fixture o = null;
-
-                if (x1.getUserData() != null && x1.getUserData() instanceof AvatarData)
-                {
-                	pd1 = (AvatarData)x1.getUserData();
-                	bd1 = (AvatarData)x1.getBody().getUserData();
-                	
-                	Debug.d("Player description: "+ pd1.mDescription);
-                	Debug.d("Body description: "+ bd1.mDescription);
-                	
-                	if (pd1.mDescription == "feet")
-                	{
-                		pd = pd1;
-                    	ft = x1;
-                    	o = x2;
-                	}
-                	else if (bd1.mDescription.compareTo("tornado") == 0)
-                	{
-                		x2.getBody().applyForce(TornadoForce, x1.getBody().getPosition());
-                		final AvatarData pdata = bd1;
-                		physicsWorld.postRunnable(new Runnable() {
-							@Override
-							public void run() {
-								if (pdata != null)
-								{
-									pdata.mSprite.setVisible(false);
-								}
-								Filter filter = new Filter();
-								filter.maskBits = 0;
-								x1.setFilterData(filter);
-							}
-                		});
-                	}
+                
+                Fixture feet = null;
+                Fixture other = null;
+                
+                feet = testFeet(x1);
+                other = x2;
+                if (feet == null) {
+                	feet = testFeet(x2);
+                	other = x1;
                 }
-                else if (x2.getUserData() != null && x2.getUserData() instanceof AvatarData)
-                {
-                	pd2 = (AvatarData)x2.getUserData();
-                	bd2 = (AvatarData)x2.getBody().getUserData();
-                	
-                	Debug.d("Player description: "+ pd2.mDescription);
-                	Debug.d("Body description: "+ bd2.mDescription);
-                	
-                	if (pd2.mDescription == "feet")
-                	{
-                		pd = pd2;
-                    	ft = x2;
-                    	o = x1;
-                	}
-                	else if (bd2.mDescription.compareTo("tornado") == 0)
-                	{
-                		x1.getBody().applyForce(TornadoForce, x1.getBody().getPosition());
-                		final AvatarData pdata = bd2;
-                		physicsWorld.postRunnable(new Runnable() {
-							@Override
-							public void run() {
-								if (pdata != null)
-								{
-									pdata.mSprite.setVisible(false);
-								}
-								Filter filter = new Filter();
-								filter.maskBits = 0;
-								x2.setFilterData(filter);
-							}
-                		});
-                	}
-                }
-            	if (ft != null && pd != null)
-            	{
-            		if ((ft.getFilterData().maskBits & o.getFilterData().categoryBits) == o.getFilterData().categoryBits)
+                
+                if (feet != null) {
+                	if ((feet.getFilterData().maskBits & other.getFilterData().categoryBits) == other.getFilterData().categoryBits)
             		{
-            			avatars[Integer.parseInt(pd.mId)].increaseFootContacts();
+            			((FeetData)feet.getUserData()).mAvatar.increaseFootContacts();
             		}
-                    if (o.getBody().getUserData() != null && o.getBody().getUserData().equals("switch"))
-                    {
-                    	mNumPlayersOnSwitch++;
-                    	if (mNumPlayersOnSwitch == 1)
-                    	{
-                    		physicsWorld.postRunnable(new Runnable() {
-
-								@Override
-								public void run() {
-									final Sprite levelObject = hiddenPlatformSprite;
-					                hiddenPlatformBody = PhysicsFactory.createBoxBody(physicsWorld, levelObject, BodyType.StaticBody, FIXTURE_DEF);
-					                hiddenPlatformBody.setUserData("platform3");
-					                hiddenPlatformSprite.setCullingEnabled(true);
-					                attachChild(hiddenPlatformSprite);
-								}
-                    			
-                    		});
-                    	}
-                    }
                 }
+                
+//                Debug.d("Attempting Contact");
+                
+                // if not type UserData, don't even try to do anything
+                if (! (x1.getBody().getUserData() != null && x1.getBody().getUserData() instanceof UserData )) return;
+                if (! (x2.getBody().getUserData() != null && x2.getBody().getUserData() instanceof UserData )) return;
+                
+                UserData userData1 = (UserData)x1.getBody().getUserData();
+                UserData userData2 = (UserData)x2.getBody().getUserData();
+                
+//                Debug.d("Both are userdata");
+                
+                CollisionData c1 = getCollisionDataFromUserData(userData1);
+                CollisionData c2 = getCollisionDataFromUserData(userData2);
+                
+                // some type of collision data must be found to continue
+                if (c1 == null || c2 == null) return;
+                
+//                Debug.d("Both userdatas have collisiondata, running collision");
+                
+                c1.mCollisionTarget.collideOther(c2.mCollisionTarget);
+                c2.mCollisionTarget.collideOther(c1.mCollisionTarget);
             }
 
             public void endContact(Contact contact)
             {
-            	final Fixture x1 = contact.getFixtureA();
-                final Fixture x2 = contact.getFixtureB();
-                AvatarData pd1, pd2, pd = null;
-                Fixture ft = null;
-                Fixture o = null;
-
-                if (x1.getUserData() != null && x1.getUserData() instanceof AvatarData)
-                {
-                	pd1 = (AvatarData)x1.getUserData();
-                	if (pd1.mDescription == "feet")
-                	{
-                		pd = pd1;
-                    	ft = x1;
-                    	o = x2;
-                	}
-                }
-                else if (x2.getUserData() != null && x2.getUserData() instanceof AvatarData)
-                {
-                	pd2 = (AvatarData)x2.getUserData();
-                	if (pd2.mDescription == "feet")
-                	{
-                		pd = pd2;
-                    	ft = x2;
-                    	o = x1;
-                	}
-                }
-            	if (ft != null && pd != null)
-            	{
-                    avatars[Integer.parseInt(pd.mId)].decreaseFootContacts();
-                    if (o.getBody().getUserData() != null && o.getBody().getUserData().equals("switch"))
-                    {
-                    	mNumPlayersOnSwitch--;
-                    	if (mNumPlayersOnSwitch == 0 && hiddenPlatformBody != null)
-                    	{
-                    		physicsWorld.postRunnable(new Runnable() {
-
-								@Override
-								public void run() {
-					                physicsWorld.destroyBody(hiddenPlatformBody);
-					                hiddenPlatformBody = null;
-					                detachChild(hiddenPlatformSprite);
-								}
-                    			
-                    		});
-                    	}
-                    }
-                }
             }
 
             public void preSolve(Contact contact, Manifold oldManifold)
@@ -629,7 +552,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 	private int mNumPlayersOnSwitch = 0;
 	
 	private static final long CelebrationTimeInMilliseconds = 5000;
-	private static final Vector2 TornadoForce = new Vector2(0.0f, 8.0f);
+	private static final Vector2 TornadoForce = new Vector2(0.0f, 15.0f);
     
     private static final String TAG_ENTITY = "entity";
     private static final String TAG_ENTITY_ATTRIBUTE_X = "x";
@@ -648,23 +571,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
     private static FixtureDef FIXTURE_DEF;
     
     private int messageSequenceNumber = 0;
-    
-//    public void sendPlayerJumpMessage() {
-//    	PlayerJumpMessage message = new PlayerJumpMessage();
-//    	message.sequenceNumber = messageSequenceNumber++;
-//    	message.playerId = mId;
-//    	
-//		activity.sendMessage(new FlaggedNetworkMessage(message));
-//    }
-    
-//    public void sendPlayerChangeDirectionMessage(int dir) {
-//    	PlayerChangeDirectionMessage message = new PlayerChangeDirectionMessage();
-//    	message.sequenceNumber = messageSequenceNumber++;
-//    	message.playerId = mId;
-//    	message.direction = dir;
-//    	
-//    	activity.sendMessage(new FlaggedNetworkMessage(message));
-//    }
+
+    public PhysicsWorld getPhysicsWorld() {
+    	return this.physicsWorld;
+    }
     
 	@Override
 	public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent) {
@@ -691,16 +601,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 			avatar.setRunDirection(xdir);
 			
 			sendGameStateUpdate();
-			
-//			sendPlayerChangeDirectionMessage(xdir);
-			
-			
-			
-//			byte[] message = new byte[8];
-//			message[0] = (byte)mId;
-//			message[1] = (byte)0;
-//			message[2] = (byte)xdir;
-//			activity.sendMessage(message);
 		}
 		else if (pSceneTouchEvent.isActionMove())
 		{
@@ -720,21 +620,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 			{
 				avatar.setRunDirection(0);
 				sendGameStateUpdate();
-//				sendPlayerChangeDirectionMessage(0);
 			}
 		}
 		return false;
 	}
 	
-//	void handlePlayerChangeDirectionMessage(PlayerChangeDirectionMessage msg) {
-//		players[msg.playerId].setRunDirection(msg.direction);
-//	}
-//	void handlePlayerJumpMessage(PlayerJumpMessage msg) {
-//		players[msg.playerId].jump();
-//	}
-//	void handleSetHostMessage(SetHostMessage msg) {
-//		activity.setHost(msg.participantId);
-//	}
 	
 	void handlePlayerStateMessage(PlayerStateMessage message) {
 		
@@ -757,52 +647,41 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 	}
 	
 	public void createTornado(int playerId, float x, float y, int speed, long duration, final Runnable onComplete) {
-		final AnimatedSprite tornado = new AnimatedSprite(x, y, resourceManager.tornado_region, vbom);
-    	tornado.animate(100);
-    	FixtureDef fixtureDef = PhysicsFactory.createFixtureDef(0, 0, 0);
-    	fixtureDef.filter.categoryBits = 0x0004;
-    	fixtureDef.filter.maskBits = ~0x0002;
-    	final Body tornadoBody = PhysicsFactory.createBoxBody(this.physicsWorld, tornado, BodyType.KinematicBody, fixtureDef);
-        this.attachChild(tornado);
-    	tornadoBody.setUserData(new AvatarData(playerId, "tornado", tornado));
-    	tornadoBody.setFixedRotation(true);
-    	tornadoBody.setLinearVelocity(new Vector2(0, 6));
-    	
-    	final PhysicsConnector physConn = new PhysicsConnector(tornado, tornadoBody, true, false)
-        {
-            @Override
-            public void onUpdate(float pSecondsElapsed)
-            {
-                super.onUpdate(pSecondsElapsed);
-            }
-        };
-        physicsWorld.registerPhysicsConnector(physConn);
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask()
-        {
-        	@Override
-        	public void run()
-        	{
-        		physicsWorld.postRunnable(new Runnable()
-        		{
-        			public void run()
-        			{
-        				GameScene.this.physicsWorld.unregisterPhysicsConnector(physConn);
-        				GameScene.this.physicsWorld.destroyBody(tornadoBody);
-        				GameScene.this.detachChild(tornado);
-        			}
-        		});
-        		
-        		onComplete.run();
-        	}
-        }, duration);
+		
+		final Tornado tornado = new Tornado(x, y, this, playerId, speed) {
+
+			@Override
+			public void collideOther(ICollisionTarget target) {
+				if (target instanceof Rabbit) onComplete();
+			}
+			
+			
+			@Override 
+			public void onComplete() {
+				super.onComplete();
+				onComplete.run();
+			}
+		};
+				
+		
+	    Timer timer = new Timer();
+	    timer.schedule(new TimerTask()
+	    {
+	    	@Override
+	    	public void run()
+	    	{
+	    		if (!tornado.didComplete())
+	    			tornado.onComplete();
+	    	}
+	    }, duration);
+		
+	    tornado.getBody().setUserData(new CollisionData(tornado, tornado.getBody(), "tornado"));
+        this.attachChild(tornado);    	
 	}
 	
-//	public final LinkedList<NetworkMessage> unconfirmedMessages = new LinkedList<NetworkMessage>();
 	
 	public void handleMessage(FlaggedNetworkMessage message) throws IOException
 	{
-//		NetworkMessage m = null;
 		switch (message.messageFlag) {
 		case MessageFlags.MESSAGE_FROM_SERVER_PLAYER_STATE:
 			if (new Date(message.timestamp).after(mLastGameStateMessageReceived)) {
@@ -816,29 +695,12 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener
 				handleMessage(NetworkingConstants.messagePackInstance.read(message.messageBytes, WizardPlayerStateMessage.class));
 			}
 			break;
-//		case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_DIRECTION:
-//			if (m == null)
-//				m = NetworkingConstants.messagePackInstance.read(message.messageBytes, PlayerChangeDirectionMessage.class);
-//		case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_JUMP:
-//			if (m == null)
-//				m = NetworkingConstants.messagePackInstance.read(message.messageBytes, PlayerJumpMessage.class);
-//			
-//			if (m.sequenceNumber > messageSequenceNumber) {
-//				handleMessage(m);
-//				messageSequenceNumber = m.sequenceNumber;
-//			}
 		}
 		return;
 	}
 	
 	public void handleMessage(NetworkMessage message) {
 		switch (message.getFlag()) {
-//		case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_DIRECTION:
-//			handlePlayerChangeDirectionMessage((PlayerChangeDirectionMessage)message);
-//			break;
-//		case MessageFlags.MESSAGE_FROM_CLIENT_PLAYER_JUMP:
-//			handlePlayerJumpMessage((PlayerJumpMessage)message);
-//			break;
 		case MessageFlags.MESSAGE_FROM_SERVER_PLAYER_STATE:
 			handlePlayerStateMessage((PlayerStateMessage)message);
 			break;

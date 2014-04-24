@@ -14,14 +14,13 @@ import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
-import com.uacapstone.red.manager.ResourceManager;
 
 /**
  * @author Mateusz Mysliwiec
  * @author www.matim-dev.com
  * @version 1.0
  */
-public abstract class Avatar extends AnimatedSprite
+public abstract class Avatar extends AnimatedSprite implements ICollisionTarget
 {
     // ---------------------------------------------
     // CONSTRUCTOR
@@ -34,7 +33,7 @@ public abstract class Avatar extends AnimatedSprite
         mCamera = camera;
     	mId = id;
     	mPhysicsWorld = physicsWorld;
-        createPhysics();
+    	createPhysics();
     }
     
     // ---------------------------------------------
@@ -63,7 +62,7 @@ public abstract class Avatar extends AnimatedSprite
     protected abstract void animateJump(float direction);
     protected abstract void animateLand(float direction);
     protected abstract void animateFall(float direction);
-    protected abstract void setupPhysics();
+//    protected void setupPhysics();
     public abstract void setupHud();
     public abstract void onDie();
     
@@ -71,6 +70,11 @@ public abstract class Avatar extends AnimatedSprite
      * 
      * @param direction - number denoting left (negative) or right (positive)
      */
+    
+    @Override
+    public void collideOther(ICollisionTarget target) {
+    	// default: do nothing
+    }
     
     public int getId() {
     	return mId;
@@ -159,11 +163,15 @@ public abstract class Avatar extends AnimatedSprite
         }
     }
     
-    private void createPhysics()
-    {        
-    	mFixtureDef = PhysicsFactory.createFixtureDef(0, 0, 0);
+    protected void setupPhysics() {
+    	mFixtureDef = PhysicsFactory.createFixtureDef(0f, 0f, 0f);
     	mFixtureDef.filter.categoryBits = 0x0002;
     	mFixtureDef.filter.maskBits = 0x0001;
+    }
+    
+    protected void createPhysics()
+    {
+    	setupPhysics();
         body = PhysicsFactory.createBoxBody(mPhysicsWorld, this, BodyType.DynamicBody, mFixtureDef);
         
         final PolygonShape mPoly = new PolygonShape();
@@ -171,15 +179,15 @@ public abstract class Avatar extends AnimatedSprite
         		0.5f/PhysicsConnector.PIXEL_TO_METER_RATIO_DEFAULT,
         		new Vector2(0,-(mHeight/2)/PhysicsConnector.PIXEL_TO_METER_RATIO_DEFAULT),
         		0); //The size of the character is 32x32
-        final FixtureDef pFixtureDef = PhysicsFactory.createFixtureDef(0f,0f,0f,true);
+        final FixtureDef pFixtureDef = PhysicsFactory.createFixtureDef(0f,0f,0f);
         pFixtureDef.shape = mPoly;
-        pFixtureDef.filter.categoryBits = 0x0002;
-        pFixtureDef.filter.maskBits = 0x0001;
+        pFixtureDef.filter.categoryBits = mFixtureDef.filter.categoryBits;
+        pFixtureDef.filter.maskBits = mFixtureDef.filter.maskBits;
         feet=body.createFixture(pFixtureDef);
-        feet.setUserData(new AvatarData(mId, "feet"));
+        feet.setUserData(new FeetData(this, "feet"));
         mPoly.dispose();
         
-        body.setUserData(new AvatarData(mId, "player"));
+//        body.setUserData(new AvatarData(mId, "player"));
         body.setFixedRotation(true);
         
         mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(this, body, true, false)
@@ -199,7 +207,6 @@ public abstract class Avatar extends AnimatedSprite
             }
         });
         startPosition = new Vector2(body.getPosition());
-        setupPhysics();
     }
 
 	public void setHasjumped(boolean hasJumped) {
